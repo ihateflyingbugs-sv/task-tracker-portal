@@ -120,7 +120,8 @@
   </div>
 
   <!-- ==================== EXECUTIVE SIDEBAR NAVIGATION ==================== -->
-  <aside id="appSidebar" class="hidden w-64 bg-[#090D16] text-slate-400 flex-col justify-between shrink-0 border-r border-slate-800/80 z-30">
+  <div id="mobileSidebarBackdrop" onclick="toggleMobileSidebar(false)" class="fixed inset-0 bg-slate-950/60 z-30 hidden lg:hidden"></div>
+  <aside id="appSidebar" class="hidden fixed lg:static inset-y-0 left-0 w-64 bg-gradient-to-b from-[#090D16] via-[#0D1322] to-[#111B33] text-slate-400 flex-col justify-between shrink-0 border-r border-slate-800/80 z-40 transition-transform duration-200 -translate-x-full lg:translate-x-0">
     <div>
       <!-- Brand Header -->
       <div class="h-16 px-5 flex items-center gap-3 border-b border-slate-800/80">
@@ -193,8 +194,9 @@
   <div id="appMain" class="hidden flex-1 flex-col h-screen overflow-hidden">
 
     <!-- Clean Top Command Bar -->
-    <header class="h-16 bg-white border-b border-slate-200/90 px-8 flex items-center justify-between shrink-0">
+    <header class="h-16 bg-white border-b border-slate-200/90 px-4 sm:px-8 flex items-center justify-between shrink-0">
       <div class="flex items-center gap-3">
+        <button type="button" onclick="toggleMobileSidebar(true)" class="lg:hidden p-2 -ml-2 text-slate-600 hover:text-slate-900 rounded-lg hover:bg-slate-100 cursor-pointer"><i data-lucide="menu" class="w-5 h-5"></i></button>
         <h2 id="pageTitle" class="text-base font-bold text-slate-900 tracking-tight">Operational Overview</h2>
         <span class="h-4 w-px bg-slate-200"></span>
         <span class="inline-flex items-center gap-1.5 text-[11px] font-medium text-slate-500">
@@ -214,23 +216,23 @@
     </header>
 
     <!-- Scrollable Canvas -->
-    <main class="flex-1 overflow-y-auto custom-scroll p-8">
-      <div class="max-w-[1480px] mx-auto space-y-6">
+    <main class="flex-1 overflow-y-auto custom-scroll p-4 sm:p-6 lg:p-8">
+      <div class="w-full space-y-6">
 
         <!-- ====================================================================== -->
         <!-- 1. HOME VIEW                                                           -->
         <!-- ====================================================================== -->
         <section id="view-home" class="view-section space-y-6">
           <!-- Architectural Welcome Header -->
-          <div class="exec-panel p-6 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-gradient-to-r from-white via-white to-slate-50/80">
+          <div class="rounded-xl p-6 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-gradient-to-r from-[#0F172A] via-[#172554] to-[#1E3A8A] text-white shadow-md border border-blue-900/40">
             <div>
-              <div class="text-[11px] font-semibold uppercase tracking-widest text-blue-700 mb-1">Command Center</div>
-              <h3 id="welcomeTitle" class="text-xl font-bold text-slate-900 tracking-tight">Welcome back</h3>
-              <p class="text-xs text-slate-500 mt-1">Real-time operational telemetry, departmental workload distribution, and daily protocol governance.</p>
+              <div class="text-[11px] font-semibold uppercase tracking-widest text-blue-300 mb-1">Command Center</div>
+              <h3 id="welcomeTitle" class="text-xl font-bold text-white tracking-tight">Welcome back</h3>
+              <p class="text-xs text-blue-100/80 mt-1">Real-time operational telemetry, departmental workload distribution, and daily protocol governance.</p>
             </div>
             <div class="flex items-center gap-2.5">
-              <button type="button" onclick="switchTab('realtime')" class="px-3.5 py-2 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold transition flex items-center gap-2 cursor-pointer">
-                <i data-lucide="activity" class="w-3.5 h-3.5 text-blue-600"></i>
+              <button type="button" onclick="switchTab('realtime')" class="px-4 py-2 rounded-lg bg-white/15 hover:bg-white/25 text-white border border-white/20 text-xs font-semibold transition flex items-center gap-2 cursor-pointer">
+                <i data-lucide="activity" class="w-3.5 h-3.5 text-blue-300"></i>
                 <span>Open Live Monitor</span>
               </button>
             </div>
@@ -587,31 +589,31 @@
           <!-- 7 Architectural Metric Cards + Filter Bar -->
           <div class="exec-panel p-5 space-y-4">
             <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
-              <div class="p-3.5 rounded-xl bg-white border border-slate-200 border-t-2 border-t-rose-500">
+              <div class="p-3.5 rounded-xl bg-rose-50/40 border border-rose-200/80 border-t-4 border-t-rose-500">
                 <div class="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Cancelled</div>
                 <div id="rtKpiCancelled" class="font-mono text-2xl font-bold text-rose-600 mt-1">0</div>
               </div>
-              <div class="p-3.5 rounded-xl bg-white border border-slate-200 border-t-2 border-t-orange-500">
+              <div class="p-3.5 rounded-xl bg-orange-50/40 border border-orange-200/80 border-t-4 border-t-orange-500">
                 <div class="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Suspend</div>
                 <div id="rtKpiSuspended" class="font-mono text-2xl font-bold text-orange-600 mt-1">0</div>
               </div>
-              <div class="p-3.5 rounded-xl bg-white border border-slate-200 border-t-2 border-t-blue-500">
+              <div class="p-3.5 rounded-xl bg-blue-50/40 border border-blue-200/80 border-t-4 border-t-blue-500">
                 <div class="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Paused</div>
                 <div id="rtKpiPaused" class="font-mono text-2xl font-bold text-blue-600 mt-1">0</div>
               </div>
-              <div class="p-3.5 rounded-xl bg-white border border-slate-200 border-t-2 border-t-slate-400">
+              <div class="p-3.5 rounded-xl bg-slate-50/80 border border-slate-200 border-t-4 border-t-slate-400">
                 <div class="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Not Started</div>
                 <div id="rtKpiNotStarted" class="font-mono text-2xl font-bold text-slate-700 mt-1">0</div>
               </div>
-              <div class="p-3.5 rounded-xl bg-white border border-slate-200 border-t-2 border-t-amber-500">
+              <div class="p-3.5 rounded-xl bg-amber-50/40 border border-amber-200/80 border-t-4 border-t-amber-500">
                 <div class="text-[10px] font-semibold uppercase tracking-wider text-slate-400">In Progress</div>
                 <div id="rtKpiInProgress" class="font-mono text-2xl font-bold text-amber-600 mt-1">0</div>
               </div>
-              <div class="p-3.5 rounded-xl bg-white border border-slate-200 border-t-2 border-t-emerald-500">
+              <div class="p-3.5 rounded-xl bg-emerald-50/40 border border-emerald-200/80 border-t-4 border-t-emerald-500">
                 <div class="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Completed</div>
                 <div id="rtKpiCompleted" class="font-mono text-2xl font-bold text-emerald-600 mt-1">0</div>
               </div>
-              <div class="p-3.5 rounded-xl bg-slate-900 text-white border border-slate-800">
+              <div class="p-3.5 rounded-xl bg-gradient-to-br from-[#0F172A] to-[#1E3A8A] text-white border border-blue-900">
                 <div class="text-[10px] font-semibold uppercase tracking-wider text-slate-400">Total Tasks</div>
                 <div id="rtKpiTotal" class="font-mono text-2xl font-bold text-white mt-1">0</div>
               </div>
@@ -668,17 +670,17 @@
           </div>
 
           <!-- Split Telemetry Grid -->
-          <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-            <!-- Left 5 Cols: Active Execution Cards -->
-            <div class="lg:col-span-5 space-y-3 max-h-[75vh] overflow-y-auto custom-scroll pr-1">
+          <div id="rtSplitGrid" class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+            <!-- Left 5 Cols: Active Execution Cards (Hidden when Supervisor selects All Personnel) -->
+            <div id="rtLeftCardsCol" class="hidden lg:col-span-5 space-y-3 max-h-[75vh] overflow-y-auto custom-scroll pr-1">
               <div class="flex items-center justify-between">
                 <h4 id="rtCardsHeader" class="text-xs font-bold uppercase tracking-wider text-slate-500">Active Execution Queue</h4>
               </div>
               <div id="rtActiveCardsGrid" class="space-y-3"></div>
             </div>
 
-            <!-- Right 7 Cols: Chronological Activity Log -->
-            <div class="lg:col-span-7 space-y-3">
+            <!-- Right Timeline Column (Expands to full 12 cols when All Personnel is active) -->
+            <div id="rtRightTimelineCol" class="lg:col-span-12 space-y-3">
               <div class="flex items-center justify-between">
                 <h4 class="text-xs font-bold uppercase tracking-wider text-slate-500">Live Session Timeline</h4>
                 <button type="button" id="btnToggleRtScope" onclick="toggleRtTableScope(this)" class="px-2.5 py-1 rounded-md bg-slate-900 text-white text-[11px] font-semibold transition cursor-pointer">
@@ -693,9 +695,9 @@
                         <th class="px-4 py-3">Member</th>
                         <th class="px-4 py-3">Category</th>
                         <th class="px-4 py-3">Task</th>
+                        <th class="px-4 py-3">Details</th>
                         <th class="px-4 py-3">Status</th>
                         <th class="px-4 py-3">Start</th>
-                        <th class="px-4 py-3">Duration</th>
                       </tr>
                     </thead>
                     <tbody id="rtLogTableBody" class="divide-y divide-slate-100"></tbody>
@@ -1019,6 +1021,49 @@
     </div>
   </div>
 
+  <!-- ==================== MODAL: READ-ONLY TASK DETAIL INSPECTOR ==================== -->
+  <div id="detailInspectorModal" class="fixed inset-0 z-50 hidden bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 border-t-4 border-t-blue-700 space-y-4">
+      <div class="flex items-start justify-between gap-3 border-b border-slate-100 pb-3">
+        <div>
+          <span id="inspCategoryTag" class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200">Routine</span>
+          <h3 id="inspTaskTitle" class="text-base font-bold text-slate-900 mt-1.5 leading-snug">Task Details</h3>
+        </div>
+        <button type="button" onclick="closeDetailInspector()" class="text-slate-400 hover:text-slate-700 p-1 cursor-pointer"><i data-lucide="x" class="w-4 h-4"></i></button>
+      </div>
+
+      <div class="grid grid-cols-2 gap-3 p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 text-xs">
+        <div><span class="text-slate-400 block text-[10px] uppercase font-semibold">Member (PIC)</span><strong id="inspMember" class="text-slate-800"></strong></div>
+        <div><span class="text-slate-400 block text-[10px] uppercase font-semibold">Division</span><strong id="inspArea" class="text-slate-800"></strong></div>
+        <div><span class="text-slate-400 block text-[10px] uppercase font-semibold">Current Status</span><div id="inspStatus" class="mt-0.5"></div></div>
+        <div><span class="text-slate-400 block text-[10px] uppercase font-semibold">Start Timestamp</span><span id="inspStartTime" class="font-mono font-semibold text-slate-700"></span></div>
+      </div>
+
+      <div class="space-y-3 text-xs">
+        <div>
+          <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Task Details / Description</label>
+          <div id="inspDetailsBox" class="p-3 rounded-xl bg-white border border-slate-200 text-slate-700 leading-relaxed min-h-[54px]"></div>
+        </div>
+        <div>
+          <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Cause of Delay / Notes</label>
+          <div id="inspCauseBox" class="p-2.5 rounded-xl bg-slate-50 border border-slate-200/80 text-slate-500 italic"></div>
+        </div>
+        <div>
+          <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Attached Reference Links</label>
+          <div id="inspLinksContainer" class="flex flex-wrap gap-2"></div>
+        </div>
+      </div>
+
+      <div class="pt-3 border-t border-slate-100 flex items-center justify-end gap-2">
+        <button type="button" id="btnInspEditAction" class="px-4 py-2 rounded-lg bg-[#0F172A] hover:bg-blue-900 text-white text-xs font-semibold transition flex items-center gap-1.5 cursor-pointer">
+          <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
+          <span>Edit Details</span>
+        </button>
+        <button type="button" onclick="closeDetailInspector()" class="px-4 py-2 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold cursor-pointer">Close</button>
+      </div>
+    </div>
+  </div>
+
   <!-- ==================== SLIDE-OVER DRAWER: RECORD EDITOR ==================== -->
   <div id="editDrawerBackdrop" onclick="closeEditDrawer()" class="fixed inset-0 bg-slate-950/50 backdrop-blur-xs z-40 hidden"></div>
   <div id="editDrawer" class="fixed top-0 right-0 h-full w-full max-w-md bg-white shadow-2xl z-50 drawer-enter transition-transform duration-300 flex flex-col border-l border-slate-200">
@@ -1332,6 +1377,7 @@
       if (target) target.classList.remove('hidden');
       if (navBtn) navBtn.classList.add('text-white', 'bg-white/10');
       document.getElementById('pageTitle').textContent = tabTitles[tab] || 'Operations Portal';
+      toggleMobileSidebar(false);
       refreshIcons();
     }
 
@@ -1881,7 +1927,7 @@
         const k = `${String(l.pic).trim().toLowerCase()}||${String(l.task).trim().toLowerCase()}`;
         seenKeys.add(k);
         timelineRows.push({
-          pic: l.pic, category: l.category || 'Routine', task: l.task,
+          pic: l.pic, category: l.category || 'Routine', task: l.task, details: l.task_details || '',
           action: l.action || 'Not Started', start_time: l.start_time || '-',
           duration: l.duration || '-', area: l.area || 'Operations'
         });
@@ -1892,7 +1938,7 @@
         const k = `${String(t.pic).trim().toLowerCase()}||${String(t.task).trim().toLowerCase()}`;
         if (!seenKeys.has(k)) {
           timelineRows.push({
-            pic: t.pic, category: t.category || 'Routine', task: t.task,
+            pic: t.pic, category: t.category || 'Routine', task: t.task, details: t.task_details || '',
             action: t.status || 'Not Started', start_time: '-',
             duration: '-', area: t.area || 'Operations'
           });
@@ -1925,6 +1971,17 @@
       document.getElementById('rtKpiInProgress').textContent = cInp;
       document.getElementById('rtKpiCompleted').textContent = cCom;
       document.getElementById('rtKpiTotal').textContent = filteredLogs.length;
+
+      const leftCol = document.getElementById('rtLeftCardsCol');
+      const rightCol = document.getElementById('rtRightTimelineCol');
+      const showLeftCards = (!currentUser.isSupervisor) || (memberFilter !== 'ALL');
+      if (showLeftCards) {
+        leftCol.classList.remove('hidden');
+        rightCol.className = 'lg:col-span-7 space-y-3';
+      } else {
+        leftCol.classList.add('hidden');
+        rightCol.className = 'lg:col-span-12 space-y-3';
+      }
 
       const cardsGrid = document.getElementById('rtActiveCardsGrid');
       document.getElementById('rtCardsHeader').textContent = (memberFilter === 'ALL') ? 'Active Execution Queue' : `${memberFilter}'s Queue`;
@@ -1981,13 +2038,13 @@
         tbody.innerHTML = `<tr><td colspan="6" class="px-4 py-8 text-center text-slate-400">No session activity recorded for current filters.</td></tr>`;
       } else {
         tbody.innerHTML = filteredLogs.map(l => `
-          <tr onclick="openEditDrawerByTaskName('${esc(l.pic)}', '${esc(l.task)}')" class="hover:bg-slate-50/90 cursor-pointer transition">
-            <td class="px-4 py-3 font-semibold text-slate-800">${esc(l.pic)}</td>
-            <td class="px-4 py-3 text-slate-500">${esc(l.category)}</td>
+          <tr onclick="openDetailInspectorByTask('${esc(l.pic)}', '${esc(l.task)}', '${esc(l.action)}', '${esc(l.start_time || '-')}')" class="hover:bg-blue-50/40 cursor-pointer transition">
+            <td class="px-4 py-3 font-semibold text-slate-800 whitespace-nowrap">${esc(l.pic)}</td>
+            <td class="px-4 py-3 text-slate-500 whitespace-nowrap">${esc(l.category)}</td>
             <td class="px-4 py-3 font-semibold text-slate-900">${esc(l.task)}</td>
+            <td class="px-4 py-3 text-slate-500 max-w-xs truncate">${esc(l.details || '-')}</td>
             <td class="px-4 py-3">${getStatusBadge(l.action)}</td>
-            <td class="px-4 py-3 font-mono text-[11px] text-slate-500">${esc(l.start_time || '-')}</td>
-            <td class="px-4 py-3 font-mono text-[11px] font-semibold text-slate-700">${esc(l.duration || '-')}</td>
+            <td class="px-4 py-3 font-mono text-[11px] text-slate-600 whitespace-nowrap">${esc(l.start_time || '-')}</td>
           </tr>
         `).join('');
       }
@@ -2359,6 +2416,70 @@
     function openEditDrawerByTaskName(pic, taskName) {
       const t = allTasks.find(x => x.pic === pic && x.task === taskName);
       if (t) openEditDrawer(t.id);
+    }
+
+
+    function toggleMobileSidebar(open) {
+      const sbEl = document.getElementById('appSidebar');
+      const bdEl = document.getElementById('mobileSidebarBackdrop');
+      if (open) {
+        sbEl.classList.remove('-translate-x-full');
+        bdEl.classList.remove('hidden');
+      } else {
+        sbEl.classList.add('-translate-x-full');
+        bdEl.classList.add('hidden');
+      }
+    }
+
+    function openDetailInspectorByTask(pic, taskName, statusOverride, startOverride) {
+      const t = allTasks.find(x => String(x.pic).trim().toLowerCase() === String(pic).trim().toLowerCase() && String(x.task).trim().toLowerCase() === String(taskName).trim().toLowerCase());
+      const rt = allRealtimeLogs.find(x => String(x.pic).trim().toLowerCase() === String(pic).trim().toLowerCase() && String(x.task).trim().toLowerCase() === String(taskName).trim().toLowerCase());
+
+      const title = t ? t.task : taskName;
+      const cat = t ? t.category : (rt ? rt.category : 'Routine');
+      const area = t ? t.area : (rt ? rt.area : 'Operations');
+      const status = statusOverride || (t ? t.status : 'Not Started');
+      const start = startOverride || (rt ? rt.start_time : '-');
+      const details = (t && t.task_details) ? t.task_details : (rt && rt.task_details ? rt.task_details : 'No additional details provided.');
+      const cause = (t && t.cause_of_delay) ? t.cause_of_delay : (rt && rt.cause ? rt.cause : 'No cause or delay notes recorded.');
+
+      document.getElementById('inspCategoryTag').textContent = cat;
+      document.getElementById('inspTaskTitle').textContent = title;
+      document.getElementById('inspMember').textContent = pic;
+      document.getElementById('inspArea').textContent = area;
+      document.getElementById('inspStatus').innerHTML = getStatusBadge(status);
+      document.getElementById('inspStartTime').textContent = start;
+      document.getElementById('inspDetailsBox').textContent = details;
+      document.getElementById('inspCauseBox').textContent = cause;
+
+      const linksBox = document.getElementById('inspLinksContainer');
+      const rawLinks = t ? [t.link_1, t.link_2, t.link_3] : (rt ? [rt.link_1, rt.link_2, rt.link_3] : []);
+      const validLinks = rawLinks.filter(u => u && /^https?:\/\//i.test(String(u).trim()));
+      if (validLinks.length) {
+        linksBox.innerHTML = validLinks.map((u, idx) =>
+          `<a href="${esc(u.trim())}" target="_blank" rel="noopener" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-50 hover:bg-blue-600 text-blue-700 hover:text-white border border-blue-200 text-xs font-semibold transition"><i data-lucide="external-link" class="w-3.5 h-3.5"></i> Link ${idx + 1}</a>`
+        ).join('');
+      } else {
+        linksBox.innerHTML = '<span class="text-slate-400 italic">No reference links attached.</span>';
+      }
+
+      const editBtn = document.getElementById('btnInspEditAction');
+      if (t) {
+        editBtn.classList.remove('hidden');
+        editBtn.onclick = () => {
+          closeDetailInspector();
+          openEditDrawer(t.id);
+        };
+      } else {
+        editBtn.classList.add('hidden');
+      }
+
+      document.getElementById('detailInspectorModal').classList.remove('hidden');
+      refreshIcons();
+    }
+
+    function closeDetailInspector() {
+      document.getElementById('detailInspectorModal').classList.add('hidden');
     }
 
     function closeEditDrawer() {
