@@ -87,10 +87,10 @@
     .corp-dd-trigger:hover { border-color: #94A3B8; background: #F8FAFC; }
     .corp-dd-trigger.open { border-color: #1D4ED8; box-shadow: 0 0 0 3px rgba(29, 78, 216, 0.12); }
     .corp-dd-menu {
-      position: absolute; top: calc(100% + 5px); left: 0; right: 0; min-width: 210px;
-      background: #FFFFFF; border: 1px solid #CBD5E1; border-radius: 12px;
-      box-shadow: 0 12px 28px -4px rgba(15, 23, 42, 0.14), 0 4px 10px -2px rgba(15, 23, 42, 0.06);
-      z-index: 60; overflow: hidden; display: none;
+      position: fixed; min-width: 200px;
+      background: #FFFFFF; border: 1px solid #CBD5E1; border-radius: 10px;
+      box-shadow: 0 12px 28px -4px rgba(15, 23, 42, 0.18), 0 4px 10px -2px rgba(15, 23, 42, 0.08);
+      z-index: 9999; overflow: hidden; display: none;
     }
     .corp-dd-menu.show { display: block; animation: ddFadeIn 0.12s ease-out; }
     @keyframes ddFadeIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
@@ -107,19 +107,17 @@
     .corp-dd-item:hover { background: #EFF6FF; color: #1D4ED8; }
     .corp-dd-item.selected { background: #0F172A; color: #FFFFFF; font-weight: 600; }
 
-    /* Distinct Batch Entry Card Border */
+    /* Uniform Clean Border for Batch Entry Cards */
     .batch-card-distinct {
       background: #FFFFFF;
       border: 1.5px solid #CBD5E1;
-      border-left: 4px solid #1E3A8A;
-      border-radius: 14px;
-      box-shadow: 0 3px 12px -2px rgba(15, 23, 42, 0.06);
+      border-radius: 12px;
+      box-shadow: 0 1px 4px rgba(15, 23, 42, 0.04);
       transition: border-color 0.2s ease, box-shadow 0.2s ease;
     }
     .batch-card-distinct:hover {
       border-color: #94A3B8;
-      border-left-color: #1D4ED8;
-      box-shadow: 0 6px 18px -3px rgba(15, 23, 42, 0.09);
+      box-shadow: 0 4px 12px -2px rgba(15, 23, 42, 0.06);
     }
 
   </style>
@@ -268,143 +266,131 @@
       <div class="w-full space-y-6">
 
         <!-- ====================================================================== -->
-        <!-- 1. HOME VIEW (EXECUTIVE COMMAND CENTER)                                -->
+        <!-- 1. HOME VIEW (SUBTLE EXECUTIVE WORKSPACE DESIGN)                       -->
         <!-- ====================================================================== -->
         <section id="view-home" class="view-section space-y-6">
-          <!-- Executive Hero Banner with Live Telemetry Summary -->
-          <div class="rounded-2xl p-6 sm:p-7 bg-gradient-to-r from-[#090D16] via-[#131C31] to-[#1E3A8A] text-white shadow-lg border border-slate-800 relative overflow-hidden">
-            <div class="absolute right-0 top-0 w-72 h-72 bg-blue-500/10 rounded-full blur-3xl pointer-events-none"></div>
-            <div class="relative flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-              <div class="space-y-2 max-w-2xl">
-                <div class="inline-flex items-center gap-2 px-2.5 py-1 rounded-md bg-blue-500/15 border border-blue-400/25 text-blue-200 text-[11px] font-semibold tracking-wider uppercase">
-                  <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                  <span>IHFB Operations Command Center</span>
-                </div>
-                <h3 id="welcomeTitle" class="text-2xl font-extrabold text-white tracking-tight">Welcome back</h3>
-                <p class="text-xs sm:text-[13px] text-slate-300 leading-relaxed">Centralized operational governance for daily task logging, live execution monitoring, and departmental workload balancing.</p>
+          <!-- Subtle Corporate Header Bar -->
+          <div class="exec-panel p-6 bg-white border-l-4 border-l-slate-800 flex flex-col lg:flex-row lg:items-center justify-between gap-5">
+            <div class="space-y-1">
+              <div class="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+                <span>Operations Portal</span>
+                <span>•</span>
+                <span id="homeCurrentDateLabel" class="font-mono text-slate-500"></span>
               </div>
-              <div class="flex flex-wrap items-center gap-3 shrink-0">
-                <button type="button" onclick="switchTab('mine'); switchMyTaskSub(1)" class="px-4 py-2.5 rounded-xl bg-white text-slate-900 hover:bg-slate-100 text-xs font-bold shadow-sm transition flex items-center gap-2 cursor-pointer">
-                  <i data-lucide="file-plus-2" class="w-4 h-4 text-blue-700"></i>
-                  <span>Log Daily Tasks</span>
-                </button>
-                <button type="button" onclick="switchTab('realtime')" class="px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white border border-white/20 text-xs font-semibold transition flex items-center gap-2 cursor-pointer">
-                  <i data-lucide="activity" class="w-4 h-4 text-amber-300"></i>
-                  <span>Real-time Monitor</span>
-                </button>
-              </div>
+              <h3 id="welcomeTitle" class="text-xl font-bold text-slate-900 tracking-tight">Welcome back</h3>
+              <p class="text-xs text-slate-500 max-w-2xl">Monitor team execution status, review daily operational protocols, and manage departmental workloads.</p>
+            </div>
+            <div class="flex flex-wrap items-center gap-2.5 shrink-0">
+              <button type="button" onclick="switchTab('mine'); switchMyTaskSub(1)" class="px-4 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold transition flex items-center gap-2 cursor-pointer">
+                <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                <span>Record Tasks</span>
+              </button>
+              <button type="button" onclick="switchTab('realtime')" class="px-4 py-2 rounded-lg border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-700 text-xs font-semibold transition flex items-center gap-2 cursor-pointer">
+                <i data-lucide="activity" class="w-3.5 h-3.5 text-slate-600"></i>
+                <span>Real-time Monitor</span>
+              </button>
             </div>
           </div>
 
-          <!-- Operational Protocols & Closing Sequence -->
+          <!-- 2-Column Executive Layout: Daily Governance & Closing Checklist -->
           <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
-            <!-- Left 7 Cols: Daily Operational Protocols -->
-            <div class="lg:col-span-7 exec-panel p-6 flex flex-col justify-between gap-5">
-              <div class="flex items-center justify-between border-b border-slate-100 pb-3.5">
-                <div class="flex items-center gap-2.5">
-                  <div class="w-8 h-8 rounded-lg bg-blue-50 border border-blue-100 text-blue-700 flex items-center justify-center">
-                    <i data-lucide="shield-check" class="w-4 h-4"></i>
-                  </div>
-                  <div>
-                    <h4 class="text-xs font-bold uppercase tracking-wider text-slate-900">Daily Operational Protocols</h4>
-                    <p class="text-[11px] text-slate-400">Mandatory team compliance checkpoints</p>
-                  </div>
+            <!-- Left 7 Cols: Daily Communication & Logging Rules -->
+            <div class="lg:col-span-7 exec-panel p-6 flex flex-col justify-between gap-4">
+              <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+                <div class="flex items-center gap-2">
+                  <i data-lucide="bell-ring" class="w-4 h-4 text-slate-700"></i>
+                  <h4 class="text-xs font-bold uppercase tracking-wider text-slate-800">Daily Operational Reminders</h4>
                 </div>
-                <span class="px-2.5 py-1 rounded-full bg-slate-100 text-slate-600 text-[10px] font-semibold uppercase tracking-wider">Active Policy</span>
+                <span class="text-[11px] font-medium text-slate-400">Team Checkpoints</span>
               </div>
 
-              <div class="grid grid-cols-1 gap-3.5 flex-1">
+              <div class="space-y-3 flex-1 flex flex-col justify-center">
                 <!-- Morning Rule -->
-                <div onclick="handleRuleCardClick('morning')" class="p-4 rounded-xl border border-amber-200/80 bg-gradient-to-r from-amber-50/50 via-white to-white hover:border-amber-400 transition cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                  <div class="flex items-start gap-3.5">
-                    <div class="w-10 h-10 rounded-xl bg-amber-100/80 border border-amber-200 text-amber-700 flex items-center justify-center shrink-0">
-                      <i data-lucide="sunrise" class="w-5 h-5"></i>
+                <div onclick="handleRuleCardClick('morning')" class="p-4 rounded-xl border border-slate-200 bg-slate-50/60 hover:bg-white hover:border-slate-300 transition cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div class="flex items-start gap-3">
+                    <div class="w-9 h-9 rounded-lg bg-white border border-slate-200 text-slate-700 flex items-center justify-center shrink-0">
+                      <i data-lucide="sunrise" class="w-4 h-4"></i>
                     </div>
                     <div>
                       <div class="flex items-center gap-2">
                         <span class="text-xs font-bold text-slate-900">Morning Task Logging Rule</span>
-                        <span class="text-[10px] font-mono font-semibold px-1.5 py-0.5 rounded bg-amber-100 text-amber-800">START OF DAY</span>
+                        <span class="text-[10px] font-mono font-medium px-1.5 py-0.5 rounded bg-slate-200/70 text-slate-600">08:00 AM</span>
                       </div>
-                      <p id="morningRuleText" class="text-xs text-slate-600 mt-1 leading-relaxed">Remind the team via WhatsApp to log their daily tasks before starting operational activities.</p>
+                      <p id="morningRuleText" class="text-xs text-slate-500 mt-1 leading-relaxed">Remind the team via WhatsApp to log their daily tasks before starting operational activities.</p>
                     </div>
                   </div>
                   <div id="waMorningBox" class="hidden shrink-0">
-                    <button type="button" onclick="event.stopPropagation(); sendWhatsAppReminder('morning')" class="px-3.5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold shadow-2xs transition flex items-center gap-1.5 cursor-pointer">
-                      <i data-lucide="send" class="w-3.5 h-3.5"></i>
+                    <button type="button" onclick="event.stopPropagation(); sendWhatsAppReminder('morning')" class="px-3 py-1.5 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-semibold transition flex items-center gap-1.5 cursor-pointer">
+                      <i data-lucide="send" class="w-3 h-3"></i>
                       <span>Send Reminder</span>
                     </button>
                   </div>
                   <div id="memberMorningBtn" class="hidden shrink-0">
-                    <button type="button" onclick="event.stopPropagation(); switchTab('mine'); switchMyTaskSub(1)" class="px-3.5 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold transition cursor-pointer">
-                      Record Tasks →
+                    <button type="button" onclick="event.stopPropagation(); switchTab('mine'); switchMyTaskSub(1)" class="px-3 py-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold transition cursor-pointer">
+                      Log Tasks →
                     </button>
                   </div>
                 </div>
 
                 <!-- Evening Rule -->
-                <div onclick="handleRuleCardClick('evening')" class="p-4 rounded-xl border border-indigo-200/80 bg-gradient-to-r from-indigo-50/50 via-white to-white hover:border-indigo-400 transition cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                  <div class="flex items-start gap-3.5">
-                    <div class="w-10 h-10 rounded-xl bg-indigo-100/80 border border-indigo-200 text-indigo-700 flex items-center justify-center shrink-0">
-                      <i data-lucide="sunset" class="w-5 h-5"></i>
+                <div onclick="handleRuleCardClick('evening')" class="p-4 rounded-xl border border-slate-200 bg-slate-50/60 hover:bg-white hover:border-slate-300 transition cursor-pointer flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div class="flex items-start gap-3">
+                    <div class="w-9 h-9 rounded-lg bg-white border border-slate-200 text-slate-700 flex items-center justify-center shrink-0">
+                      <i data-lucide="sunset" class="w-4 h-4"></i>
                     </div>
                     <div>
                       <div class="flex items-center gap-2">
                         <span class="text-xs font-bold text-slate-900">Evening Closing Status Rule</span>
-                        <span class="text-[10px] font-mono font-semibold px-1.5 py-0.5 rounded bg-indigo-100 text-indigo-800">END OF DAY</span>
+                        <span class="text-[10px] font-mono font-medium px-1.5 py-0.5 rounded bg-slate-200/70 text-slate-600">05:00 PM</span>
                       </div>
-                      <p id="eveningRuleText" class="text-xs text-slate-600 mt-1 leading-relaxed">Remind the team via WhatsApp to update all task statuses and due dates prior to signing off.</p>
+                      <p id="eveningRuleText" class="text-xs text-slate-500 mt-1 leading-relaxed">Remind the team via WhatsApp to update all task statuses and due dates prior to signing off.</p>
                     </div>
                   </div>
                   <div id="waEveningBox" class="hidden shrink-0">
-                    <button type="button" onclick="event.stopPropagation(); sendWhatsAppReminder('evening')" class="px-3.5 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold shadow-2xs transition flex items-center gap-1.5 cursor-pointer">
-                      <i data-lucide="send" class="w-3.5 h-3.5"></i>
+                    <button type="button" onclick="event.stopPropagation(); sendWhatsAppReminder('evening')" class="px-3 py-1.5 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-semibold transition flex items-center gap-1.5 cursor-pointer">
+                      <i data-lucide="send" class="w-3 h-3"></i>
                       <span>Send Reminder</span>
                     </button>
                   </div>
                   <div id="memberEveningBtn" class="hidden shrink-0">
-                    <button type="button" onclick="event.stopPropagation(); switchTab('realtime')" class="px-3.5 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold transition cursor-pointer">
-                      Open Monitor →
+                    <button type="button" onclick="event.stopPropagation(); switchTab('realtime')" class="px-3 py-1.5 rounded-lg border border-slate-300 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold transition cursor-pointer">
+                      Update Status →
                     </button>
                   </div>
                 </div>
               </div>
             </div>
 
-            <!-- Right 5 Cols: Closing Workflow Steps -->
-            <div class="lg:col-span-5 exec-panel p-6 flex flex-col justify-between bg-slate-50/40">
-              <div class="flex items-center justify-between border-b border-slate-200/70 pb-3.5 mb-4">
-                <div class="flex items-center gap-2.5">
-                  <div class="w-8 h-8 rounded-lg bg-slate-900 text-white flex items-center justify-center">
-                    <i data-lucide="list-checks" class="w-4 h-4"></i>
-                  </div>
-                  <div>
-                    <h4 class="text-xs font-bold uppercase tracking-wider text-slate-900">Closing Sequence</h4>
-                    <p class="text-[11px] text-slate-400">Standard daily reconciliation</p>
-                  </div>
+            <!-- Right 5 Cols: End-of-Day Reconciliation Steps -->
+            <div class="lg:col-span-5 exec-panel p-6 flex flex-col justify-between">
+              <div class="flex items-center justify-between border-b border-slate-100 pb-3 mb-3">
+                <div class="flex items-center gap-2">
+                  <i data-lucide="check-circle" class="w-4 h-4 text-slate-700"></i>
+                  <h4 class="text-xs font-bold uppercase tracking-wider text-slate-800">Closing Checklist</h4>
                 </div>
-                <span class="font-mono text-[11px] font-semibold px-2 py-0.5 rounded bg-white border border-slate-200 text-slate-600">3 Steps</span>
+                <span class="font-mono text-[11px] text-slate-400">3 Steps</span>
               </div>
 
-              <div class="space-y-3 flex-1 flex flex-col justify-center">
-                <div class="p-3.5 rounded-xl bg-white border border-slate-200/90 shadow-2xs flex items-start gap-3">
-                  <span class="w-6 h-6 rounded-lg bg-blue-50 border border-blue-200 text-blue-700 font-mono text-xs font-bold flex items-center justify-center shrink-0">01</span>
+              <div class="divide-y divide-slate-100 flex-1 flex flex-col justify-center">
+                <div class="py-3 first:pt-0 flex items-start gap-3">
+                  <span class="w-5 h-5 rounded bg-slate-100 border border-slate-200 text-slate-700 font-mono text-[11px] font-bold flex items-center justify-center shrink-0 mt-0.5">1</span>
                   <div>
-                    <div class="text-xs font-bold text-slate-900">Open Real-time Monitor</div>
-                    <p class="text-[11px] text-slate-500 mt-0.5">Review all active session timers in the live telemetry view.</p>
+                    <div class="text-xs font-semibold text-slate-900">Review Live Monitor</div>
+                    <p class="text-[11px] text-slate-500 mt-0.5">Open <strong>Real-time Monitor</strong> to inspect running tasks.</p>
                   </div>
                 </div>
-                <div class="p-3.5 rounded-xl bg-white border border-slate-200/90 shadow-2xs flex items-start gap-3">
-                  <span class="w-6 h-6 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-700 font-mono text-xs font-bold flex items-center justify-center shrink-0">02</span>
+                <div class="py-3 flex items-start gap-3">
+                  <span class="w-5 h-5 rounded bg-slate-100 border border-slate-200 text-slate-700 font-mono text-[11px] font-bold flex items-center justify-center shrink-0 mt-0.5">2</span>
                   <div>
-                    <div class="text-xs font-bold text-slate-900">Mark Completed Deliverables</div>
-                    <p class="text-[11px] text-slate-500 mt-0.5">Set finished tasks to <span class="font-semibold text-emerald-700">Completed</span> to close the timer.</p>
+                    <div class="text-xs font-semibold text-slate-900">Confirm Completed Work</div>
+                    <p class="text-[11px] text-slate-500 mt-0.5">Mark finished deliverables as <strong>Completed</strong>.</p>
                   </div>
                 </div>
-                <div class="p-3.5 rounded-xl bg-white border border-slate-200/90 shadow-2xs flex items-start gap-3">
-                  <span class="w-6 h-6 rounded-lg bg-amber-50 border border-amber-200 text-amber-700 font-mono text-xs font-bold flex items-center justify-center shrink-0">03</span>
+                <div class="py-3 last:pb-0 flex items-start gap-3">
+                  <span class="w-5 h-5 rounded bg-slate-100 border border-slate-200 text-slate-700 font-mono text-[11px] font-bold flex items-center justify-center shrink-0 mt-0.5">3</span>
                   <div>
-                    <div class="text-xs font-bold text-slate-900">Reconcile Pending Work</div>
-                    <p class="text-[11px] text-slate-500 mt-0.5">Update <span class="font-semibold text-slate-700">Due Date</span> or set <span class="font-semibold text-amber-700">Paused / Suspend</span> for carry-over.</p>
+                    <div class="text-xs font-semibold text-slate-900">Reschedule Pending Tasks</div>
+                    <p class="text-[11px] text-slate-500 mt-0.5">Adjust <strong>Due Date</strong> or select <strong>Paused / Suspend</strong>.</p>
                   </div>
                 </div>
               </div>
@@ -415,57 +401,48 @@
           <div id="homeAreasSection" class="hidden exec-panel p-6 space-y-4">
             <div class="flex items-center justify-between border-b border-slate-100 pb-3">
               <h4 class="text-xs font-bold uppercase tracking-wider text-slate-800 flex items-center gap-2">
-                <i data-lucide="layers" class="w-4 h-4 text-blue-700"></i>
+                <i data-lucide="layers" class="w-4 h-4 text-slate-700"></i>
                 <span>Departmental Divisions</span>
               </h4>
-              <span class="text-[11px] text-slate-400">Select a division to filter the live monitor</span>
+              <span class="text-[11px] text-slate-400">Filter Real-time Monitor by area</span>
             </div>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
-              <div onclick="jumpToArea('Operations')" class="p-5 rounded-xl border border-slate-200 border-t-4 border-t-blue-600 bg-slate-50/40 hover:bg-white hover:shadow-md transition cursor-pointer group flex flex-col justify-between gap-4">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div onclick="jumpToArea('Operations')" class="p-4 rounded-xl border border-slate-200 bg-slate-50/40 hover:bg-white hover:border-slate-400 transition cursor-pointer group flex flex-col justify-between gap-3">
                 <div>
-                  <div class="flex items-center justify-between mb-3">
-                    <div class="w-9 h-9 rounded-lg bg-blue-100/80 text-blue-700 flex items-center justify-center">
-                      <i data-lucide="cpu" class="w-4 h-4"></i>
-                    </div>
-                    <span class="text-[11px] font-semibold text-blue-700 group-hover:translate-x-0.5 transition flex items-center gap-1">Monitor <i data-lucide="arrow-up-right" class="w-3.5 h-3.5"></i></span>
+                  <div class="flex items-center justify-between mb-2">
+                    <span class="text-xs font-bold text-slate-900 flex items-center gap-2"><i data-lucide="cpu" class="w-4 h-4 text-slate-600"></i> Operations</span>
+                    <i data-lucide="arrow-up-right" class="w-3.5 h-3.5 text-slate-400 group-hover:text-slate-900 transition"></i>
                   </div>
-                  <h5 class="text-sm font-bold text-slate-900">Operations</h5>
-                  <p class="text-xs text-slate-500 mt-1 leading-relaxed">Account processing (SDP, Parcel), platform verification & daily reporting.</p>
+                  <p class="text-xs text-slate-500 leading-relaxed">Account processing (SDP, Parcel), platform verification & daily reporting.</p>
                 </div>
-                <div class="pt-3 border-t border-slate-200/70 text-[11px] text-slate-600 truncate">
-                  <span class="font-semibold text-slate-800">Key Scope:</span> Platform check • SDP tickets • Daily report
+                <div class="pt-2.5 border-t border-slate-200/70 text-[11px] text-slate-500 truncate">
+                  Platform check • SDP tickets • Daily report
                 </div>
               </div>
 
-              <div onclick="jumpToArea('Education')" class="p-5 rounded-xl border border-slate-200 border-t-4 border-t-indigo-600 bg-slate-50/40 hover:bg-white hover:shadow-md transition cursor-pointer group flex flex-col justify-between gap-4">
+              <div onclick="jumpToArea('Education')" class="p-4 rounded-xl border border-slate-200 bg-slate-50/40 hover:bg-white hover:border-slate-400 transition cursor-pointer group flex flex-col justify-between gap-3">
                 <div>
-                  <div class="flex items-center justify-between mb-3">
-                    <div class="w-9 h-9 rounded-lg bg-indigo-100/80 text-indigo-700 flex items-center justify-center">
-                      <i data-lucide="graduation-cap" class="w-4 h-4"></i>
-                    </div>
-                    <span class="text-[11px] font-semibold text-indigo-700 group-hover:translate-x-0.5 transition flex items-center gap-1">Monitor <i data-lucide="arrow-up-right" class="w-3.5 h-3.5"></i></span>
+                  <div class="flex items-center justify-between mb-2">
+                    <span class="text-xs font-bold text-slate-900 flex items-center gap-2"><i data-lucide="graduation-cap" class="w-4 h-4 text-slate-600"></i> Education</span>
+                    <i data-lucide="arrow-up-right" class="w-3.5 h-3.5 text-slate-400 group-hover:text-slate-900 transition"></i>
                   </div>
-                  <h5 class="text-sm font-bold text-slate-900">Education</h5>
-                  <p class="text-xs text-slate-500 mt-1 leading-relaxed">Training programs, platform demonstrations, and documentation updates.</p>
+                  <p class="text-xs text-slate-500 leading-relaxed">Training programs, platform demonstrations, and documentation updates.</p>
                 </div>
-                <div class="pt-3 border-t border-slate-200/70 text-[11px] text-slate-600 truncate">
-                  <span class="font-semibold text-slate-800">Key Scope:</span> Demo scripts • Training Hub • Manuals
+                <div class="pt-2.5 border-t border-slate-200/70 text-[11px] text-slate-500 truncate">
+                  Demo scripts • Training Hub • Manuals
                 </div>
               </div>
 
-              <div onclick="jumpToArea('Dev & Content')" class="p-5 rounded-xl border border-slate-200 border-t-4 border-t-slate-800 bg-slate-50/40 hover:bg-white hover:shadow-md transition cursor-pointer group flex flex-col justify-between gap-4">
+              <div onclick="jumpToArea('Dev & Content')" class="p-4 rounded-xl border border-slate-200 bg-slate-50/40 hover:bg-white hover:border-slate-400 transition cursor-pointer group flex flex-col justify-between gap-3">
                 <div>
-                  <div class="flex items-center justify-between mb-3">
-                    <div class="w-9 h-9 rounded-lg bg-slate-200/80 text-slate-800 flex items-center justify-center">
-                      <i data-lucide="code-2" class="w-4 h-4"></i>
-                    </div>
-                    <span class="text-[11px] font-semibold text-slate-800 group-hover:translate-x-0.5 transition flex items-center gap-1">Monitor <i data-lucide="arrow-up-right" class="w-3.5 h-3.5"></i></span>
+                  <div class="flex items-center justify-between mb-2">
+                    <span class="text-xs font-bold text-slate-900 flex items-center gap-2"><i data-lucide="code-2" class="w-4 h-4 text-slate-600"></i> Dev & Content</span>
+                    <i data-lucide="arrow-up-right" class="w-3.5 h-3.5 text-slate-400 group-hover:text-slate-900 transition"></i>
                   </div>
-                  <h5 class="text-sm font-bold text-slate-900">Dev & Content</h5>
-                  <p class="text-xs text-slate-500 mt-1 leading-relaxed">Content production, editorial quality assurance, and team supervision.</p>
+                  <p class="text-xs text-slate-500 leading-relaxed">Content production, editorial quality assurance, and team supervision.</p>
                 </div>
-                <div class="pt-3 border-t border-slate-200/70 text-[11px] text-slate-600 truncate">
-                  <span class="font-semibold text-slate-800">Key Scope:</span> Content creation • Editorial review
+                <div class="pt-2.5 border-t border-slate-200/70 text-[11px] text-slate-500 truncate">
+                  Content creation • Editorial review
                 </div>
               </div>
             </div>
@@ -475,12 +452,12 @@
           <div class="exec-panel p-6">
             <div class="flex items-center justify-between border-b border-slate-100 pb-3.5 mb-4">
               <h4 id="homeWorkloadTitle" class="text-xs font-bold uppercase tracking-wider text-slate-800 flex items-center gap-2">
-                <i data-lucide="users" class="w-4 h-4 text-blue-700"></i>
+                <i data-lucide="users" class="w-4 h-4 text-slate-700"></i>
                 <span>Active Team Workload</span>
               </h4>
-              <span class="text-[11px] text-slate-400">Click any team member to inspect active tasks</span>
+              <span class="text-[11px] text-slate-400">Select a team member to view queue</span>
             </div>
-            <div id="homeTeamWorkloadGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5"></div>
+            <div id="homeTeamWorkloadGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"></div>
           </div>
         </section>
 
@@ -700,30 +677,34 @@
 
             <div class="pt-4 border-t border-slate-100 flex flex-wrap items-center justify-between gap-3">
               <div class="flex flex-wrap items-center gap-2.5">
-                <div id="rtMemberFilterBox" class="hidden">
+                <div id="rtMemberFilterBox" class="hidden w-52">
                   <select id="rtFilterMember" onchange="renderRealtimeView()" class="exec-input px-3 py-1.5 font-semibold">
-                    <option value="ALL">All Team Members</option>
+                    <option value="ALL">All Personnel</option>
                   </select>
                 </div>
-                <select id="rtFilterArea" onchange="renderRealtimeView()" class="exec-input px-3 py-1.5 font-medium">
-                  <option value="ALL">All Divisions</option>
-                  <option value="Operations">Operations</option>
-                  <option value="Education">Education</option>
-                  <option value="Dev & Content">Dev & Content</option>
-                </select>
-                <select id="rtFilterStatus" onchange="renderRealtimeView()" class="exec-input px-3 py-1.5 font-medium">
-                  <option value="ALL">All Statuses</option>
-                  <option value="Not Started">Not Started</option>
-                  <option value="In progress">In progress</option>
-                  <option value="Paused">Paused</option>
-                  <option value="Completed">Completed</option>
-                  <option value="Suspend">Suspend</option>
-                  <option value="Cancelled">Cancelled</option>
-                </select>
+                <div class="w-44">
+                  <select id="rtFilterArea" onchange="renderRealtimeView()" class="exec-input px-3 py-1.5 font-medium">
+                    <option value="ALL">All Divisions</option>
+                    <option value="Operations">Operations</option>
+                    <option value="Education">Education</option>
+                    <option value="Dev & Content">Dev & Content</option>
+                  </select>
+                </div>
+                <div class="w-40">
+                  <select id="rtFilterStatus" onchange="renderRealtimeView()" class="exec-input px-3 py-1.5 font-medium">
+                    <option value="ALL">All Statuses</option>
+                    <option value="Not Started">Not Started</option>
+                    <option value="In progress">In progress</option>
+                    <option value="Paused">Paused</option>
+                    <option value="Completed">Completed</option>
+                    <option value="Suspend">Suspend</option>
+                    <option value="Cancelled">Cancelled</option>
+                  </select>
+                </div>
               </div>
-              <div class="relative w-full sm:w-64">
+              <div class="relative w-full sm:w-60">
                 <i data-lucide="search" class="w-3.5 h-3.5 text-slate-400 absolute left-3 top-2.5"></i>
-                <input type="text" id="rtSearchInput" oninput="renderRealtimeView()" placeholder="Filter tasks or personnel..." class="exec-input w-full pl-8 pr-3 py-1.5">
+                <input type="text" id="rtSearchInput" oninput="renderRealtimeView()" placeholder="Search tasks..." class="exec-input w-full pl-8 pr-3 py-1.5">
               </div>
             </div>
           </div>
@@ -788,143 +769,114 @@
         </section>
 
         <!-- ====================================================================== -->
-        <!-- 4. TASK GUIDE & SOP CATALOG (STRUCTURED EXECUTIVE LAYOUT)              -->
+        <!-- 4. TASK GUIDE & SOP PLAYBOOK                                           -->
         <!-- ====================================================================== -->
         <section id="view-guide" class="view-section hidden space-y-6">
-          <!-- Guide Header Banner -->
-          <div class="rounded-2xl p-6 bg-gradient-to-r from-[#090D16] via-[#131C31] to-[#1E3A8A] text-white shadow-md flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <!-- Subtle Corporate Header -->
+          <div class="exec-panel p-6 bg-white border-l-4 border-l-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-              <div class="text-[11px] font-semibold uppercase tracking-widest text-blue-300 mb-1">Operational Playbook</div>
-              <h3 class="text-xl font-bold text-white tracking-tight">Standard Operating Procedures & Definitions</h3>
-              <p class="text-xs text-slate-300 mt-1">Step-by-step lifecycle protocols, status transition governance, and standard task criteria.</p>
+              <div class="text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-1">Standard Operating Procedures</div>
+              <h3 class="text-xl font-bold text-slate-900 tracking-tight">Task Tracker Operational Guide</h3>
+              <p class="text-xs text-slate-500 mt-1">Official workflow instructions, status transition rules, and standard scope definitions.</p>
             </div>
-            <span id="guideRoleBadge" class="px-3 py-1.5 rounded-lg bg-white/15 border border-white/20 text-white text-xs font-semibold shrink-0">Role Protocol</span>
+            <span id="guideRoleBadge" class="px-3 py-1.5 rounded-lg bg-slate-100 border border-slate-200 text-slate-700 text-xs font-semibold shrink-0">Role Protocol</span>
           </div>
 
-          <!-- Workflow Phases Grid -->
-          <div class="exec-panel p-6 space-y-4">
-            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
-              <h4 class="text-xs font-bold uppercase tracking-wider text-slate-800 flex items-center gap-2">
-                <i data-lucide="compass" class="w-4 h-4 text-blue-700"></i>
-                <span>Daily Execution Lifecycle</span>
-              </h4>
-              <span class="text-[11px] text-slate-400">Sequential 3-Phase Protocol</span>
+          <!-- Two-Column Guide Layout: Left = Step-by-Step Workflow Playbook, Right = Status Reference Guide -->
+          <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+            <!-- Left 6 Cols: Step-by-Step Workflow Playbook -->
+            <div class="lg:col-span-6 exec-panel p-6 space-y-5">
+              <div class="border-b border-slate-100 pb-3 flex items-center justify-between">
+                <h4 class="text-xs font-bold uppercase tracking-wider text-slate-800 flex items-center gap-2">
+                  <i data-lucide="book-open" class="w-4 h-4 text-slate-700"></i>
+                  <span>Step-by-Step Workflow Guide</span>
+                </h4>
+                <span class="text-[11px] text-slate-400">Daily Sequence</span>
+              </div>
+
+              <!-- Member Steps (Vertical Timeline Guide) -->
+              <div id="guideMemberSteps" class="relative pl-6 border-l-2 border-slate-200 space-y-6 my-2">
+                <div class="relative">
+                  <span class="absolute -left-[33px] top-0 w-4 h-4 rounded-full bg-slate-900 ring-4 ring-white"></span>
+                  <div class="text-[11px] font-mono font-bold text-slate-400 uppercase">Step 1 • Start of Shift</div>
+                  <h5 class="text-sm font-bold text-slate-900 mt-0.5">Log Daily Tasks in Batch</h5>
+                  <p class="text-xs text-slate-600 mt-1 leading-relaxed">Go to <strong>My Task → 1. Batch Task Record</strong>. Select your assigned <em>Routine</em> or <em>On Demand</em> tasks, attach any reference links, and submit. All new tasks start in <strong>Not Started</strong>.</p>
+                </div>
+
+                <div class="relative">
+                  <span class="absolute -left-[33px] top-0 w-4 h-4 rounded-full bg-amber-500 ring-4 ring-white"></span>
+                  <div class="text-[11px] font-mono font-bold text-slate-400 uppercase">Step 2 • During Execution</div>
+                  <h5 class="text-sm font-bold text-slate-900 mt-0.5">Track Live Work in Real-time Monitor</h5>
+                  <p class="text-xs text-slate-600 mt-1 leading-relaxed">Open <strong>Real-time Monitor</strong> and click <strong>Start</strong> on the task you are working on. If you need to switch to another priority during the day, click <strong>Pause</strong> (no note required).</p>
+                </div>
+
+                <div class="relative">
+                  <span class="absolute -left-[33px] top-0 w-4 h-4 rounded-full bg-emerald-600 ring-4 ring-white"></span>
+                  <div class="text-[11px] font-mono font-bold text-slate-400 uppercase">Step 3 • End of Shift</div>
+                  <h5 class="text-sm font-bold text-slate-900 mt-0.5">Close or Carry Over Pending Tasks</h5>
+                  <p class="text-xs text-slate-600 mt-1 leading-relaxed">Click <strong>Done</strong> once completion criteria are met. If a task continues tomorrow, update its <strong>Due Date</strong> or select <strong>More → Suspend</strong> with a brief note.</p>
+                </div>
+              </div>
+
+              <!-- Supervisor Steps (Vertical Timeline Guide) -->
+              <div id="guideSupervisorSteps" class="hidden relative pl-6 border-l-2 border-slate-200 space-y-6 my-2">
+                <div class="relative">
+                  <span class="absolute -left-[33px] top-0 w-4 h-4 rounded-full bg-slate-900 ring-4 ring-white"></span>
+                  <div class="text-[11px] font-mono font-bold text-slate-400 uppercase">Step 1 • Morning Audit</div>
+                  <h5 class="text-sm font-bold text-slate-900 mt-0.5">Verify Team Logging Compliance</h5>
+                  <p class="text-xs text-slate-600 mt-1 leading-relaxed">Check <strong>Home → Active Team Workload</strong> and send the morning WhatsApp reminder if team members have not yet queued their daily tasks.</p>
+                </div>
+
+                <div class="relative">
+                  <span class="absolute -left-[33px] top-0 w-4 h-4 rounded-full bg-amber-500 ring-4 ring-white"></span>
+                  <div class="text-[11px] font-mono font-bold text-slate-400 uppercase">Step 2 • Live Supervision</div>
+                  <h5 class="text-sm font-bold text-slate-900 mt-0.5">Inspect Live Session Timeline</h5>
+                  <p class="text-xs text-slate-600 mt-1 leading-relaxed">Use <strong>Real-time Monitor</strong> to view all team activity or filter by a specific member/division. Click any row to inspect deliverable details and attached links.</p>
+                </div>
+
+                <div class="relative">
+                  <span class="absolute -left-[33px] top-0 w-4 h-4 rounded-full bg-emerald-600 ring-4 ring-white"></span>
+                  <div class="text-[11px] font-mono font-bold text-slate-400 uppercase">Step 3 • Reporting & Governance</div>
+                  <p class="text-xs text-slate-600 mt-1 leading-relaxed">Review overdue items in <strong>Team overview</strong>, standardize task scopes in <strong>My Task → Scope & Definitions</strong>, and export CSV reports from <strong>History</strong>.</p>
+                </div>
+              </div>
             </div>
 
-            <!-- Member Workflow -->
-            <div id="guideMemberSteps" class="grid grid-cols-1 md:grid-cols-3 gap-5">
-              <div class="p-5 rounded-xl bg-slate-50/70 border border-slate-200 border-t-4 border-t-blue-600 space-y-2.5">
-                <div class="flex items-center justify-between">
-                  <span class="font-mono text-[11px] font-bold px-2 py-0.5 rounded bg-blue-100 text-blue-800">PHASE 01</span>
-                  <i data-lucide="file-plus-2" class="w-4 h-4 text-blue-600"></i>
-                </div>
-                <h5 class="text-sm font-bold text-slate-900">Morning Task Logging</h5>
-                <p class="text-xs text-slate-600 leading-relaxed">Open <strong>My Task → 1. Batch Task Record</strong> to log all planned activities for the day. New records initialize automatically in <strong>Not Started</strong> status.</p>
-              </div>
-              <div class="p-5 rounded-xl bg-slate-50/70 border border-slate-200 border-t-4 border-t-amber-500 space-y-2.5">
-                <div class="flex items-center justify-between">
-                  <span class="font-mono text-[11px] font-bold px-2 py-0.5 rounded bg-amber-100 text-amber-800">PHASE 02</span>
-                  <i data-lucide="play-circle" class="w-4 h-4 text-amber-600"></i>
-                </div>
-                <h5 class="text-sm font-bold text-slate-900">Live Session Tracking</h5>
-                <p class="text-xs text-slate-600 leading-relaxed">Navigate to <strong>Real-time Monitor</strong> and click <strong>Start</strong> when beginning work. Click <strong>Pause</strong> if switching tasks mid-day (no note required).</p>
-              </div>
-              <div class="p-5 rounded-xl bg-slate-50/70 border border-slate-200 border-t-4 border-t-emerald-600 space-y-2.5">
-                <div class="flex items-center justify-between">
-                  <span class="font-mono text-[11px] font-bold px-2 py-0.5 rounded bg-emerald-100 text-emerald-800">PHASE 03</span>
-                  <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-600"></i>
-                </div>
-                <h5 class="text-sm font-bold text-slate-900">End-of-Day Reconciliation</h5>
-                <p class="text-xs text-slate-600 leading-relaxed">Mark completed deliverables as <strong>Done / Completed</strong>. For multi-day tasks, update the <strong>Due Date</strong> or set <strong>Suspend</strong> with a justification note.</p>
-              </div>
-            </div>
-
-            <!-- Supervisor Workflow -->
-            <div id="guideSupervisorSteps" class="hidden grid grid-cols-1 md:grid-cols-3 gap-5">
-              <div class="p-5 rounded-xl bg-slate-50/70 border border-slate-200 border-t-4 border-t-blue-600 space-y-2.5">
-                <div class="flex items-center justify-between">
-                  <span class="font-mono text-[11px] font-bold px-2 py-0.5 rounded bg-blue-100 text-blue-800">PHASE 01</span>
-                  <i data-lucide="users" class="w-4 h-4 text-blue-600"></i>
-                </div>
-                <h5 class="text-sm font-bold text-slate-900">Capacity & Compliance Audit</h5>
-                <p class="text-xs text-slate-600 leading-relaxed">Review <strong>Home → Active Team Workload</strong> to verify daily logging compliance and active task distribution across all personnel.</p>
-              </div>
-              <div class="p-5 rounded-xl bg-slate-50/70 border border-slate-200 border-t-4 border-t-amber-500 space-y-2.5">
-                <div class="flex items-center justify-between">
-                  <span class="font-mono text-[11px] font-bold px-2 py-0.5 rounded bg-amber-100 text-amber-800">PHASE 02</span>
-                  <i data-lucide="activity" class="w-4 h-4 text-amber-600"></i>
-                </div>
-                <h5 class="text-sm font-bold text-slate-900">Live Telemetry Inspection</h5>
-                <p class="text-xs text-slate-600 leading-relaxed">Filter <strong>Real-time Monitor</strong> by division or member to inspect active queues, timestamps, and attached deliverable links.</p>
-              </div>
-              <div class="p-5 rounded-xl bg-slate-50/70 border border-slate-200 border-t-4 border-t-emerald-600 space-y-2.5">
-                <div class="flex items-center justify-between">
-                  <span class="font-mono text-[11px] font-bold px-2 py-0.5 rounded bg-emerald-100 text-emerald-800">PHASE 03</span>
-                  <i data-lucide="file-spreadsheet" class="w-4 h-4 text-emerald-600"></i>
-                </div>
-                <h5 class="text-sm font-bold text-slate-900">Governance & CSV Reporting</h5>
-                <p class="text-xs text-slate-600 leading-relaxed">Audit delay causes, review suspended notes, and export standardized reports from <strong>Team overview</strong> and <strong>History</strong>.</p>
-              </div>
-            </div>
-          </div>
-
-          <!-- Status Governance Cards (Visual 6-Card Grid instead of cramped text) -->
-          <div class="exec-panel p-6 space-y-4">
-            <div class="flex items-center justify-between border-b border-slate-100 pb-3">
-              <h4 class="text-xs font-bold uppercase tracking-wider text-slate-800 flex items-center gap-2">
-                <i data-lucide="tag" class="w-4 h-4 text-blue-700"></i>
-                <span>Status Definitions & Transition Rules</span>
-              </h4>
-              <span class="text-[11px] text-slate-400">6 Official States</span>
-            </div>
-
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              <div class="p-4 rounded-xl border border-slate-200 bg-slate-50/50 space-y-2">
-                <div class="flex items-center justify-between">
-                  <span class="px-2.5 py-0.5 rounded-md text-[11px] font-bold bg-slate-200/80 text-slate-800 border border-slate-300">Not Started</span>
-                  <span class="text-[10px] font-mono text-slate-400">DEFAULT</span>
-                </div>
-                <p class="text-xs text-slate-600 leading-relaxed">Scheduled for the current workday; execution timer has not been initiated yet.</p>
+            <!-- Right 6 Cols: Status Reference Guide -->
+            <div class="lg:col-span-6 exec-panel p-6 space-y-4">
+              <div class="border-b border-slate-100 pb-3 flex items-center justify-between">
+                <h4 class="text-xs font-bold uppercase tracking-wider text-slate-800 flex items-center gap-2">
+                  <i data-lucide="info" class="w-4 h-4 text-slate-700"></i>
+                  <span>Status Reference & Usage Rules</span>
+                </h4>
+                <span class="text-[11px] text-slate-400">6 States</span>
               </div>
 
-              <div class="p-4 rounded-xl border border-amber-200 bg-amber-50/40 space-y-2">
-                <div class="flex items-center justify-between">
-                  <span class="px-2.5 py-0.5 rounded-md text-[11px] font-bold bg-amber-100 text-amber-800 border border-amber-300">In progress</span>
-                  <span class="text-[10px] font-mono text-amber-700">ACTIVE</span>
+              <div class="divide-y divide-slate-100 text-xs">
+                <div class="py-3 first:pt-0 flex items-start justify-between gap-4">
+                  <div class="w-28 shrink-0 pt-0.5"><span class="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-slate-100 text-slate-700 border border-slate-200">Not Started</span></div>
+                  <p class="text-slate-600 flex-1 leading-relaxed">Task is scheduled for today, but work has not started yet.</p>
                 </div>
-                <p class="text-xs text-slate-600 leading-relaxed">Actively under execution; live session timestamp is active and visible to supervisors.</p>
-              </div>
-
-              <div class="p-4 rounded-xl border border-blue-200 bg-blue-50/40 space-y-2">
-                <div class="flex items-center justify-between">
-                  <span class="px-2.5 py-0.5 rounded-md text-[11px] font-bold bg-blue-100 text-blue-800 border border-blue-300">Paused</span>
-                  <span class="text-[10px] font-mono text-blue-700">SAME DAY</span>
+                <div class="py-3 flex items-start justify-between gap-4">
+                  <div class="w-28 shrink-0 pt-0.5"><span class="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-amber-50 text-amber-800 border border-amber-200">In progress</span></div>
+                  <p class="text-slate-600 flex-1 leading-relaxed">Actively working on the task right now. Start timestamp is logged.</p>
                 </div>
-                <p class="text-xs text-slate-600 leading-relaxed">Temporarily halted during the same workday when switching tasks. No note required.</p>
-              </div>
-
-              <div class="p-4 rounded-xl border border-emerald-200 bg-emerald-50/40 space-y-2">
-                <div class="flex items-center justify-between">
-                  <span class="px-2.5 py-0.5 rounded-md text-[11px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">Completed</span>
-                  <span class="text-[10px] font-mono text-emerald-700">CLOSED</span>
+                <div class="py-3 flex items-start justify-between gap-4">
+                  <div class="w-28 shrink-0 pt-0.5"><span class="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-blue-50 text-blue-700 border border-blue-200">Paused</span></div>
+                  <p class="text-slate-600 flex-1 leading-relaxed">Temporarily paused during the <strong>same day</strong> to handle another task. No note required.</p>
                 </div>
-                <p class="text-xs text-slate-600 leading-relaxed">All Definition of Done criteria have been fully satisfied and verified.</p>
-              </div>
-
-              <div class="p-4 rounded-xl border border-orange-200 bg-orange-50/40 space-y-2">
-                <div class="flex items-center justify-between">
-                  <span class="px-2.5 py-0.5 rounded-md text-[11px] font-bold bg-orange-100 text-orange-800 border border-orange-300">Suspend</span>
-                  <span class="text-[10px] font-mono text-orange-700">NOTE REQ.</span>
+                <div class="py-3 flex items-start justify-between gap-4">
+                  <div class="w-28 shrink-0 pt-0.5"><span class="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">Completed</span></div>
+                  <p class="text-slate-600 flex-1 leading-relaxed">All completion criteria (<em>Definition of Done</em>) are met.</p>
                 </div>
-                <p class="text-xs text-slate-600 leading-relaxed">Blocked by external factor or deferred to a future date. Mandatory reason note required.</p>
-              </div>
-
-              <div class="p-4 rounded-xl border border-rose-200 bg-rose-50/40 space-y-2">
-                <div class="flex items-center justify-between">
-                  <span class="px-2.5 py-0.5 rounded-md text-[11px] font-bold bg-rose-100 text-rose-800 border border-rose-300">Cancelled</span>
-                  <span class="text-[10px] font-mono text-rose-700">NOTE REQ.</span>
+                <div class="py-3 flex items-start justify-between gap-4">
+                  <div class="w-28 shrink-0 pt-0.5"><span class="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-orange-50 text-orange-700 border border-orange-200">Suspend</span></div>
+                  <p class="text-slate-600 flex-1 leading-relaxed">Blocked or deferred to a <strong>future date</strong>. Requires a mandatory reason note.</p>
                 </div>
-                <p class="text-xs text-slate-600 leading-relaxed">Voided or logged in error; permanently closed. Mandatory justification note required.</p>
+                <div class="py-3 last:pb-0 flex items-start justify-between gap-4">
+                  <div class="w-28 shrink-0 pt-0.5"><span class="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-rose-50 text-rose-700 border border-rose-200">Cancelled</span></div>
+                  <p class="text-slate-600 flex-1 leading-relaxed">Logged by mistake or will no longer be executed. Requires a mandatory note.</p>
+                </div>
               </div>
             </div>
           </div>
@@ -934,7 +886,7 @@
             <div class="px-6 py-4 bg-slate-50/70 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
                 <h3 class="text-sm font-bold text-slate-900">Standard Task Definitions <span id="defCountBadge" class="ml-2 font-mono text-xs font-normal text-slate-500"></span></h3>
-                <p class="text-xs text-slate-500 mt-0.5">Items flagged <span class="px-1.5 py-0.5 rounded bg-rose-50 text-rose-700 border border-rose-200 text-[10px] font-semibold">Pending Definition</span> require completion criteria.</p>
+                <p class="text-xs text-slate-500 mt-0.5">Items marked <span class="px-1.5 py-0.5 rounded bg-rose-50 text-rose-700 border border-rose-200 text-[10px] font-semibold">Pending Definition</span> still need completion criteria.</p>
               </div>
               <div class="flex items-center gap-2.5">
                 <div class="w-48">
@@ -1393,6 +1345,10 @@
           if (!isOpen) {
             searchInp.value = '';
             rebuildList('');
+            const rect = trigger.getBoundingClientRect();
+            menu.style.top = (rect.bottom + 4) + 'px';
+            menu.style.left = Math.max(8, Math.min(rect.left, window.innerWidth - Math.max(rect.width, 220) - 12)) + 'px';
+            menu.style.width = Math.max(rect.width, 190) + 'px';
             menu.classList.add('show');
             trigger.classList.add('open');
             if (searchInp.style.display !== 'none') setTimeout(() => searchInp.focus(), 20);
@@ -1524,6 +1480,7 @@
       document.getElementById('userRoleBadge').textContent = currentUser.role;
       document.getElementById('userAvatar').textContent = currentUser.member.charAt(0).toUpperCase();
       document.getElementById('welcomeTitle').textContent = 'Welcome back, ' + currentUser.member.split(' ')[0];
+      const dateLbl = document.getElementById('homeCurrentDateLabel'); if (dateLbl) dateLbl.textContent = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric', year: 'numeric' });
 
       if (currentUser.isSupervisor) {
         document.getElementById('supervisorMenuGroup').classList.remove('hidden');
@@ -1881,7 +1838,6 @@
         <div id="bOnDemandBox-${id}" class="hidden space-y-2">
           <label class="block text-[11px] font-semibold text-slate-600 uppercase tracking-wider">On Demand Assignment (Assigned to PIC)</label>
           <select id="bOnDemandSel-${id}" onchange="onBatchOnDemandChange(${id})" class="exec-input w-full px-3 py-2 font-medium"></select>
-          <input type="text" id="bNewProjectInput-${id}" placeholder="Enter custom assignment title..." class="hidden exec-input w-full px-3 py-2 font-medium border-blue-400">
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -1969,8 +1925,7 @@
       const oSel = document.getElementById('bOnDemandSel-' + id);
       if (oSel) {
         oSel.innerHTML = '<option value="">Select assignment...</option>' +
-          onDemands.map(r => `<option value="${esc(r.task)}">${esc(r.task)}</option>`).join('') +
-          '<option value="__NEW_PROJ__">+ Custom assignment...</option>';
+          onDemands.map(r => `<option value="${esc(r.task)}">${esc(r.task)}</option>`).join('');
       }
       enhanceCustomSelects();
     }
@@ -1997,7 +1952,6 @@
     function onBatchOnDemandChange(id) {
       const pic = getActiveMinePic();
       const val = document.getElementById('bOnDemandSel-' + id).value;
-      document.getElementById('bNewProjectInput-' + id).classList.toggle('hidden', val !== '__NEW_PROJ__');
       const def = allDefinitions.find(d => String(d.member).trim().toLowerCase() === pic.toLowerCase() && d.task === val);
       if (def) {
         if (def.area) {
@@ -2040,8 +1994,7 @@
         if (cat === 'Routine') {
           taskName = document.getElementById('bRoutineSel-' + id).value;
         } else {
-          const selVal = document.getElementById('bOnDemandSel-' + id).value;
-          taskName = (selVal === '__NEW_PROJ__') ? document.getElementById('bNewProjectInput-' + id).value.trim() : selVal;
+          taskName = document.getElementById('bOnDemandSel-' + id).value;
         }
         if (!taskName) return showToast(`Select or enter a task title for Entry #${id}`, true);
 
@@ -2201,48 +2154,27 @@
         return true;
       });
 
-      // Build master lookup so status and details in task_log are always authoritative and synced
-      const taskMasterMap = {};
-      allTasks.forEach(t => {
-        const k = `${String(t.pic).trim().toLowerCase()}||${String(t.task).trim().toLowerCase()}`;
-        if (!taskMasterMap[k]) taskMasterMap[k] = t;
-      });
-
-      const timelineRows = [];
-      const seenTaskIds = new Set();
-      const seenKeys = new Set();
-
-      // 1. Add all today's realtime logs synced with task_log status/details
+      // Build 1-to-1 latest realtime_log lookup per (pic + task) for today
+      const latestRtByKey = {};
       allRealtimeLogs.forEach(l => {
         if (l.log_date !== today && l.action !== 'Suspend') return;
         const k = `${String(l.pic).trim().toLowerCase()}||${String(l.task).trim().toLowerCase()}`;
-        const master = taskMasterMap[k];
-        if (master) seenTaskIds.add(master.id);
-        seenKeys.add(k);
-        timelineRows.push({
-          id: master ? master.id : null,
-          pic: l.pic,
-          category: master ? (master.category || 'Routine') : (l.category || 'Routine'),
-          task: l.task,
-          details: master ? (master.task_details || '') : (l.task_details || ''),
-          action: master ? (master.status || l.action || 'Not Started') : (l.action || 'Not Started'),
-          start_time: l.start_time || '-',
-          duration: l.duration || '-',
-          area: master ? (master.area || 'Operations') : (l.area || 'Operations')
-        });
+        if (!latestRtByKey[k]) latestRtByKey[k] = l;
       });
 
-      // 2. Include ALL Not Started, Paused, In progress, Suspend tasks (and today's Completed/Cancelled) from task_log
+      // Build unified, deduplicated timeline directly from task_log (today's tasks + all open/Not Started/Paused/In progress/Suspend tasks)
+      const timelineRows = [];
+      const consumedRtKeys = new Set();
+
       allTasks.forEach(t => {
-        if (seenTaskIds.has(t.id)) return;
         const st = String(t.status || 'Not Started');
         const isOpenOrNotStarted = (st !== 'Completed' && st !== 'Cancelled');
-        const isTodayClosed = (t.start_date === today);
-        if (!isOpenOrNotStarted && !isTodayClosed) return;
+        const isTodayRecord = (t.start_date === today);
+        if (!isOpenOrNotStarted && !isTodayRecord) return;
 
         const k = `${String(t.pic).trim().toLowerCase()}||${String(t.task).trim().toLowerCase()}`;
-        if (seenKeys.has(k) && st !== 'Not Started') return;
-        seenKeys.add(k);
+        const rtMatch = !consumedRtKeys.has(k) ? latestRtByKey[k] : null;
+        if (rtMatch) consumedRtKeys.add(k);
 
         timelineRows.push({
           id: t.id,
@@ -2251,18 +2183,19 @@
           task: t.task,
           details: t.task_details || '',
           action: st,
-          start_time: '-',
-          duration: '-',
+          start_time: (st !== 'Not Started' && rtMatch && rtMatch.start_time) ? rtMatch.start_time : '-',
+          duration: (rtMatch && rtMatch.duration) ? rtMatch.duration : '-',
           area: t.area || 'Operations'
         });
       });
 
+      // Scope button (`Scope: All Team` vs `Scope: My Tasks`) works for ALL users
       const filteredLogs = timelineRows.filter(l => {
-        if (currentUser.isSupervisor && memberFilter !== 'ALL' && l.pic !== memberFilter) return false;
-        if (!currentUser.isSupervisor && !rtScopeAllTeam && l.pic !== currentUser.member) return false;
+        if (!rtScopeAllTeam && l.pic !== currentUser.member) return false;
+        if (rtScopeAllTeam && currentUser.isSupervisor && memberFilter !== 'ALL' && l.pic !== memberFilter) return false;
         if (areaFilter !== 'ALL' && l.area !== areaFilter) return false;
         if (statusFilter !== 'ALL' && l.action !== statusFilter) return false;
-        if (query && !(`${l.task} ${l.pic}`).toLowerCase().includes(query)) return false;
+        if (query && !(`${l.task} ${l.pic} ${l.details}`).toLowerCase().includes(query)) return false;
         return true;
       });
 
@@ -2350,7 +2283,7 @@
         tbody.innerHTML = `<tr><td colspan="6" class="px-4 py-8 text-center text-slate-400">No session activity recorded for current filters.</td></tr>`;
       } else {
         tbody.innerHTML = filteredLogs.map(l => `
-          <tr onclick="openDetailInspectorByTask('${esc(l.pic)}', '${esc(l.task)}', '${esc(l.action)}', '${esc(l.start_time || '-')}')" class="hover:bg-blue-50/40 cursor-pointer transition">
+          <tr onclick="openDetailInspectorById(${l.id}, '${esc(l.action)}', '${esc(l.start_time || '-')}')" class="hover:bg-blue-50/40 cursor-pointer transition">
             <td class="px-4 py-3 font-semibold text-slate-800 whitespace-nowrap">${esc(l.pic)}</td>
             <td class="px-4 py-3 text-slate-500 whitespace-nowrap">${esc(l.category)}</td>
             <td class="px-4 py-3 font-semibold text-slate-900">${esc(l.task)}</td>
@@ -2430,7 +2363,7 @@
           duration: duration,
           cause: updatedCause,
           updated_at: new Date().toISOString()
-        }).ilike('pic', task.pic).ilike('task', task.task);
+        }).eq('log_date', today).ilike('pic', task.pic).ilike('task', task.task);
       } else {
         await sb.from('realtime_log').insert([{
           pic: task.pic,
@@ -2464,7 +2397,9 @@
         if (!el) return;
         const cur = el.value;
         el.innerHTML = '<option value="ALL">All Personnel</option>' + members.map(m => `<option value="${esc(m)}">${esc(m)}</option>`).join('');
-        if (cur) el.value = cur;
+        if (cur && Array.from(el.options).some(o => o.value === cur)) el.value = cur;
+        else el.value = 'ALL';
+        syncCustomSelectUI(id);
       });
       const minePic = document.getElementById('minePicSelect');
       if (minePic && !minePic.value) {
@@ -2744,9 +2679,13 @@
       }
     }
 
-    function openDetailInspectorByTask(pic, taskName, statusOverride, startOverride) {
-      const t = allTasks.find(x => String(x.pic).trim().toLowerCase() === String(pic).trim().toLowerCase() && String(x.task).trim().toLowerCase() === String(taskName).trim().toLowerCase());
-      const rt = allRealtimeLogs.find(x => String(x.pic).trim().toLowerCase() === String(pic).trim().toLowerCase() && String(x.task).trim().toLowerCase() === String(taskName).trim().toLowerCase());
+    function openDetailInspectorById(taskId, statusOverride, startOverride) {
+      const t = allTasks.find(x => x.id === Number(taskId));
+      if (!t) return;
+      const today = todayISO();
+      const rt = allRealtimeLogs.find(x => (x.log_date === today || x.action === 'Suspend') && String(x.pic).trim().toLowerCase() === String(t.pic).trim().toLowerCase() && String(x.task).trim().toLowerCase() === String(t.task).trim().toLowerCase());
+      const pic = t.pic;
+      const taskName = t.task;
 
       const title = t ? t.task : taskName;
       const cat = t ? t.category : (rt ? rt.category : 'Routine');
@@ -2825,8 +2764,9 @@
       const { error } = await sb.from('task_log').update(updates).eq('id', id);
       if (error) return showToast('Error updating record: ' + error.message, true);
 
-      // Propagate status, details, title, area & links to matching realtime_log entries globally
+      // Propagate status & details ONLY to today's matching realtime_log entry for this specific task
       if (prevTask) {
+        const today = todayISO();
         const rtUpdates = {
           task: updates.task,
           category: updates.category,
@@ -2839,7 +2779,7 @@
           link_3: updates.link_3,
           updated_at: new Date().toISOString()
         };
-        await sb.from('realtime_log').update(rtUpdates).ilike('pic', prevTask.pic).ilike('task', prevTask.task);
+        await sb.from('realtime_log').update(rtUpdates).eq('log_date', today).ilike('pic', prevTask.pic).ilike('task', prevTask.task);
       }
 
       closeEditDrawer();
