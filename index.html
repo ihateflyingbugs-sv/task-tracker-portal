@@ -1409,11 +1409,7 @@
     // ==================== TAB 1: HOME ====================
     function sendWhatsAppReminder(mode) {
       const url = window.location.href;
-      const msg = mode === 'morning'
-        ? `*Please remember to record your tasks and update their status in the Task Tracker.*
-${url}`
-        : `*Please remember to update your task status before leaving work.*
-${url}`;
+      const msg = mode === 'morning' ? `*Please remember to record your tasks and update their status in the Task Tracker.*\n${url}` : `*Please remember to update your task status before leaving work.*\n${url}`;
       window.open('https://web.whatsapp.com/send?text=' + encodeURIComponent(msg), 'IHFB_WhatsApp_Window');
     }
 
@@ -2396,9 +2392,7 @@ ${url}`;
       const cols = ['PIC', 'Start Date', 'Due Date', 'Overdue', 'Cause of Delay', 'Category', 'Task', 'Task Details', 'Status', 'Duration'];
       const escCsv = v => {
         const s = String(v == null ? '' : v);
-        return /[",
-
-]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
+        return /[",\n\r]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
       };
       const lines = [cols.map(escCsv).join(',')].concat(rows.map(r => cols.map(c => escCsv(r[c])).join(',')));
       const blob = new Blob(['\ufeff' + lines.join('\r\n')], { type: 'text/csv;charset=utf-8;' });
