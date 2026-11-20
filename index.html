@@ -1347,43 +1347,54 @@
 
   <!-- ==================== MODAL: READ-ONLY TASK DETAIL INSPECTOR ==================== -->
   <div id="detailInspectorModal" class="fixed inset-0 z-50 hidden bg-slate-950/60 backdrop-blur-xs flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 border-t-4 border-t-blue-700 space-y-4">
-      <div class="flex items-start justify-between gap-3 border-b border-slate-100 pb-3">
+    <div class="bg-white rounded-2xl max-w-xl w-full p-6 sm:p-7 shadow-2xl border border-slate-200 border-t-4 border-t-[#1A64FF] space-y-5">
+      <div class="flex items-start justify-between gap-3 border-b border-slate-100 pb-3.5">
         <div>
-          <span id="inspCategoryTag" class="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-blue-50 text-blue-700 border border-blue-200">Routine</span>
-          <h3 id="inspTaskTitle" class="text-base font-bold text-slate-900 mt-1.5 leading-snug">Task Details</h3>
+          <span id="inspCategoryTag" class="text-[11px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-md bg-blue-50 text-[#1A64FF] border border-blue-200">Routine</span>
+          <h3 id="inspTaskTitle" class="text-lg font-bold text-slate-900 mt-2 leading-snug">Task Details</h3>
         </div>
-        <button type="button" onclick="closeDetailInspector()" class="text-slate-400 hover:text-slate-700 p-1 cursor-pointer"><i data-lucide="x" class="w-4 h-4"></i></button>
+        <button type="button" onclick="closeDetailInspector()" class="text-slate-400 hover:text-slate-700 p-1.5 rounded-lg hover:bg-slate-100 transition cursor-pointer"><i data-lucide="x" class="w-5 h-5"></i></button>
       </div>
 
-      <div class="grid grid-cols-2 gap-3 p-3.5 rounded-xl bg-slate-50 border border-slate-200/80 text-xs">
-        <div><span class="text-slate-400 block text-[10px] uppercase font-semibold">Member (PIC)</span><strong id="inspMember" class="text-slate-800"></strong></div>
-        <div><span class="text-slate-400 block text-[10px] uppercase font-semibold">Division</span><strong id="inspArea" class="text-slate-800"></strong></div>
-        <div><span class="text-slate-400 block text-[10px] uppercase font-semibold">Current Status</span><div id="inspStatus" class="mt-0.5"></div></div>
-        <div><span class="text-slate-400 block text-[10px] uppercase font-semibold">Start Timestamp</span><span id="inspStartTime" class="font-mono font-semibold text-slate-700"></span></div>
+      <div class="grid grid-cols-2 gap-4 p-4 rounded-xl bg-slate-50/90 border border-slate-200/80 text-[13px]">
+        <div><span class="text-slate-500 block text-[11px] uppercase font-bold tracking-wider mb-0.5">Member (PIC)</span><strong id="inspMember" class="text-slate-900 font-semibold"></strong></div>
+        <div><span class="text-slate-500 block text-[11px] uppercase font-bold tracking-wider mb-0.5">Division</span><strong id="inspArea" class="text-slate-900 font-semibold"></strong></div>
+        <div><span class="text-slate-500 block text-[11px] uppercase font-bold tracking-wider mb-1">Current Status</span><div id="inspStatus"></div></div>
+        <div><span class="text-slate-500 block text-[11px] uppercase font-bold tracking-wider mb-0.5">Start Timestamp</span><span id="inspStartTime" class="font-mono text-[13.5px] font-semibold text-slate-800"></span></div>
       </div>
 
-      <div class="space-y-3 text-xs">
-        <div>
-          <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Task Details / Description</label>
-          <div id="inspDetailsBox" class="p-3 rounded-xl bg-white border border-slate-200 text-slate-700 leading-relaxed min-h-[54px]"></div>
+      <div class="space-y-4 text-[13.5px]">
+        <!-- Completed When (Criteria) Highlight Box -->
+        <div class="p-3.5 rounded-xl bg-emerald-50/55 border border-emerald-200/90 space-y-1.5">
+          <label class="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-emerald-800">
+            <i data-lucide="check-circle-2" class="w-4 h-4 text-[#10B981] shrink-0"></i>
+            <span>Completed When (Criteria)</span>
+          </label>
+          <div id="inspCriteriaBox" class="text-[13.5px] font-medium text-slate-800 leading-relaxed pl-5.5"></div>
         </div>
+
         <div>
-          <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Cause of Delay / Notes</label>
-          <div id="inspCauseBox" class="p-2.5 rounded-xl bg-slate-50 border border-slate-200/80 text-slate-500 italic"></div>
+          <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">Task Details / Description</label>
+          <div id="inspDetailsBox" class="p-3.5 rounded-xl bg-white border border-slate-200 text-slate-800 leading-relaxed min-h-[58px]"></div>
         </div>
+
         <div>
-          <label class="block text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1.5">Attached Reference Links</label>
+          <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">Cause of Delay / Notes</label>
+          <div id="inspCauseBox" class="p-3 rounded-xl bg-slate-50 border border-slate-200/80 text-slate-600 italic"></div>
+        </div>
+
+        <div>
+          <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-500 mb-1.5">Attached Reference Links</label>
           <div id="inspLinksContainer" class="flex flex-wrap gap-2"></div>
         </div>
       </div>
 
-      <div class="pt-3 border-t border-slate-100 flex items-center justify-end gap-2">
-        <button type="button" id="btnInspEditAction" class="px-4 py-2 rounded-lg bg-[#0F172A] hover:bg-blue-900 text-white text-xs font-semibold transition flex items-center gap-1.5 cursor-pointer">
+      <div class="pt-3.5 border-t border-slate-100 flex items-center justify-end gap-2.5">
+        <button type="button" id="btnInspEditAction" class="px-4 py-2.5 rounded-xl bg-[#0A0A0B] hover:bg-[#1A64FF] text-white text-xs font-semibold transition flex items-center gap-1.5 cursor-pointer">
           <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
           <span>Edit Details</span>
         </button>
-        <button type="button" onclick="closeDetailInspector()" class="px-4 py-2 rounded-lg border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold cursor-pointer">Close</button>
+        <button type="button" onclick="closeDetailInspector()" class="px-4 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold cursor-pointer">Close</button>
       </div>
     </div>
   </div>
@@ -2640,12 +2651,12 @@
                   <span class="w-8 h-8 rounded-lg bg-slate-100 border border-slate-200 text-slate-700 font-bold text-xs flex items-center justify-center shrink-0">
                     ${esc(String(l.pic || 'U').charAt(0).toUpperCase())}
                   </span>
-                  <span class="text-xs font-semibold text-slate-800 truncate block" title="${esc(l.pic)}">${esc(l.pic)}</span>
+                  <span class="text-[13px] font-semibold text-slate-800 truncate block" title="${esc(l.pic)}">${esc(l.pic)}</span>
                 </div>
 
                 <!-- Col 2: Task Title + Category + Division Second -->
                 <div class="min-w-0 pr-2">
-                  <div class="text-xs font-bold text-slate-900 group-hover:text-[#1A64FF] transition truncate" title="${esc(l.task)}">${esc(l.task)}</div>
+                  <div class="text-[13px] font-bold text-slate-900 group-hover:text-[#1A64FF] transition truncate" title="${esc(l.task)}">${esc(l.task)}</div>
                   <div class="flex items-center gap-1.5 mt-1">
                     <span class="px-1.5 py-0.5 rounded bg-slate-100 border border-slate-200/80 text-[10px] font-semibold text-slate-600 shrink-0">${esc(l.category)}</span>
                     <span class="text-[10px] font-medium text-slate-400 truncate">• ${esc(l.area)}</span>
@@ -2654,7 +2665,7 @@
 
                 <!-- Col 3: Proportional Deliverable Details -->
                 <div class="min-w-0">
-                  <p class="text-[11.5px] text-slate-500 truncate" title="${esc(l.details || '-')}">${esc(l.details || '—')}</p>
+                  <p class="text-xs text-slate-600 truncate" title="${esc(l.details || '-')}">${esc(l.details || '—')}</p>
                 </div>
 
                 <!-- Col 4: Aligned Status Pill -->
@@ -3119,13 +3130,27 @@
       const start = startOverride || (rt ? rt.start_time : '-');
       const details = (t && t.task_details) ? t.task_details : (rt && rt.task_details ? rt.task_details : 'No additional details provided.');
       const cause = (t && t.cause_of_delay) ? t.cause_of_delay : (rt && rt.cause ? rt.cause : 'No cause or delay notes recorded.');
+      const defMatch = allDefinitions.find(d =>
+        String(d.member || '').trim().toLowerCase() === String(pic || '').trim().toLowerCase() &&
+        String(d.task || '').trim().toLowerCase() === String(title || '').trim().toLowerCase()
+      ) || allDefinitions.find(d => String(d.task || '').trim().toLowerCase() === String(title || '').trim().toLowerCase());
+      const criteriaText = (defMatch && defMatch.done_when && String(defMatch.done_when).trim())
+        ? String(defMatch.done_when).trim()
+        : 'Pending completion criteria in Task Definitions.';
 
       document.getElementById('inspCategoryTag').textContent = cat;
       document.getElementById('inspTaskTitle').textContent = title;
       document.getElementById('inspMember').textContent = pic;
       document.getElementById('inspArea').textContent = area;
-      document.getElementById('inspStatus').innerHTML = getStatusBadge(status, true);
+      document.getElementById('inspStatus').innerHTML = getStatusBadge(status);
       document.getElementById('inspStartTime').textContent = start;
+      const critEl = document.getElementById('inspCriteriaBox');
+      if (critEl) {
+        critEl.textContent = criteriaText;
+        critEl.className = (defMatch && defMatch.done_when && String(defMatch.done_when).trim())
+          ? 'text-[13.5px] font-medium text-slate-800 leading-relaxed'
+          : 'text-[13px] italic text-slate-500 leading-relaxed';
+      }
       document.getElementById('inspDetailsBox').textContent = details;
       document.getElementById('inspCauseBox').textContent = cause;
 
