@@ -43,9 +43,9 @@
     .custom-scroll::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 9999px; }
     .custom-scroll::-webkit-scrollbar-thumb:hover { background: #94A3B8; }
     
-    /* Fluid Responsive Typography Scale across Laptop, Desktop & Wide Monitors */
+    /* Harmonious Fluid Typography Scale across Small, Laptop & Wide Monitors */
     html {
-      font-size: clamp(14.5px, 0.25vw + 14px, 16.5px);
+      font-size: clamp(13px, 0.22vw + 12.2px, 15px);
     }
     body {
       line-height: 1.5;
@@ -281,22 +281,22 @@
   <div id="appMain" class="hidden flex-1 min-w-0 flex-col h-screen overflow-hidden">
 
     <!-- Clean Top Command Bar -->
-    <header class="h-16 bg-white border-b border-slate-200/90 px-4 sm:px-8 flex items-center justify-between shrink-0">
-      <div class="flex items-center gap-3">
-        <button type="button" onclick="toggleMobileSidebar(true)" class="lg:hidden p-2 -ml-2 text-slate-600 hover:text-slate-900 rounded-lg hover:bg-slate-100 cursor-pointer"><i data-lucide="menu" class="w-5 h-5"></i></button>
-        <h2 id="pageTitle" class="text-base font-bold text-slate-900 tracking-tight">Operational Overview</h2>
-        <span class="h-4 w-px bg-slate-200"></span>
-        <span class="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500">
+    <header class="h-16 bg-white border-b border-slate-200/90 px-4 sm:px-7 flex items-center justify-between gap-3 shrink-0">
+      <div class="flex items-center gap-2.5 sm:gap-3 min-w-0">
+        <button type="button" onclick="toggleMobileSidebar(true)" class="lg:hidden p-2 -ml-2 text-slate-600 hover:text-slate-900 rounded-lg hover:bg-slate-100 cursor-pointer shrink-0"><i data-lucide="menu" class="w-5 h-5"></i></button>
+        <h2 id="pageTitle" class="text-[16px] sm:text-[17px] font-bold text-slate-900 tracking-tight truncate">Operational Overview</h2>
+        <span class="hidden sm:inline-block h-4 w-px bg-slate-200 shrink-0"></span>
+        <span class="hidden sm:inline-flex items-center gap-1.5 text-[12px] font-medium text-slate-500 shrink-0">
           <span class="w-2 h-2 rounded-full bg-emerald-500"></span> Live Sync
         </span>
-        <span id="topHeaderRolePill" class="hidden sm:inline-flex items-center px-2.5 py-0.5 rounded-md text-[11px] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-300">Member</span>
+        <span id="topHeaderRolePill" class="hidden sm:inline-flex items-center px-2.5 py-0.5 rounded-md text-[11px] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-300 shrink-0">Member</span>
       </div>
-      <div class="flex items-center gap-2.5">
-        <button type="button" onclick="syncAllData(true)" title="Sync Workspace" class="px-3 py-1.5 text-slate-600 hover:text-slate-900 bg-white hover:bg-slate-50 rounded-lg border border-slate-200 text-xs font-medium transition flex items-center gap-1.5 cursor-pointer">
+      <div class="flex items-center gap-2 sm:gap-2.5 shrink-0">
+        <button type="button" onclick="syncAllData(true)" title="Sync Workspace" class="px-3 py-1.5 text-slate-600 hover:text-slate-900 bg-white hover:bg-slate-50 rounded-lg border border-slate-200 text-[12.5px] font-medium transition flex items-center gap-1.5 cursor-pointer">
           <i id="syncIcon" data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
-          <span>Sync</span>
+          <span class="hidden sm:inline">Sync</span>
         </button>
-        <button type="button" onclick="switchTab('mine'); switchMyTaskSub(1)" class="px-3.5 py-1.5 bg-[#0F172A] hover:bg-slate-800 text-white text-xs font-semibold rounded-lg shadow-2xs transition flex items-center gap-1.5 cursor-pointer">
+        <button type="button" onclick="switchTab('mine'); switchMyTaskSub(1)" class="px-3.5 py-1.5 bg-[#0F172A] hover:bg-slate-800 text-white text-[12.5px] font-semibold rounded-lg shadow-2xs transition flex items-center gap-1.5 cursor-pointer">
           <i data-lucide="plus" class="w-3.5 h-3.5"></i>
           <span>Log Task</span>
         </button>
@@ -755,32 +755,32 @@
           <div class="exec-panel p-5 space-y-4">
             <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
               <div class="p-3.5 rounded-xl bg-red-50/50 border border-red-200/80 border-t-4 border-t-red-500">
-                <div class="text-[10px] font-semibold uppercase tracking-wider text-red-700/80">Cancelled</div>
-                <div id="rtKpiCancelled" class="font-mono text-2xl font-bold text-red-600 mt-1">0</div>
+                <div class="text-[11px] font-bold uppercase tracking-wider text-red-700/80">Cancelled</div>
+                <div id="rtKpiCancelled" class="font-mono text-[24px] leading-tight font-bold text-red-600 mt-1">0</div>
               </div>
               <div class="p-3.5 rounded-xl bg-orange-50/50 border border-orange-200/80 border-t-4 border-t-orange-500">
-                <div class="text-[10px] font-semibold uppercase tracking-wider text-orange-700/80">Suspend</div>
-                <div id="rtKpiSuspended" class="font-mono text-2xl font-bold text-orange-600 mt-1">0</div>
+                <div class="text-[11px] font-bold uppercase tracking-wider text-orange-700/80">Suspend</div>
+                <div id="rtKpiSuspended" class="font-mono text-[24px] leading-tight font-bold text-orange-600 mt-1">0</div>
               </div>
               <div class="p-3.5 rounded-xl bg-blue-50/50 border border-blue-200/80 border-t-4 border-t-blue-500">
-                <div class="text-[10px] font-semibold uppercase tracking-wider text-blue-700/80">Paused</div>
-                <div id="rtKpiPaused" class="font-mono text-2xl font-bold text-blue-600 mt-1">0</div>
+                <div class="text-[11px] font-bold uppercase tracking-wider text-blue-700/80">Paused</div>
+                <div id="rtKpiPaused" class="font-mono text-[24px] leading-tight font-bold text-blue-600 mt-1">0</div>
               </div>
               <div class="p-3.5 rounded-xl bg-slate-50 border border-slate-200 border-t-4 border-t-slate-400">
-                <div class="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Not Started</div>
-                <div id="rtKpiNotStarted" class="font-mono text-2xl font-bold text-slate-700 mt-1">0</div>
+                <div class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Not Started</div>
+                <div id="rtKpiNotStarted" class="font-mono text-[24px] leading-tight font-bold text-slate-700 mt-1">0</div>
               </div>
               <div class="p-3.5 rounded-xl bg-amber-50/60 border border-amber-200/80 border-t-4 border-t-amber-500">
-                <div class="text-[10px] font-semibold uppercase tracking-wider text-amber-700/80">In Progress</div>
-                <div id="rtKpiInProgress" class="font-mono text-2xl font-bold text-amber-600 mt-1">0</div>
+                <div class="text-[11px] font-bold uppercase tracking-wider text-amber-700/80">In Progress</div>
+                <div id="rtKpiInProgress" class="font-mono text-[24px] leading-tight font-bold text-amber-600 mt-1">0</div>
               </div>
               <div class="p-3.5 rounded-xl bg-emerald-50/50 border border-emerald-200/80 border-t-4 border-t-emerald-500">
-                <div class="text-[10px] font-semibold uppercase tracking-wider text-emerald-700/80">Completed</div>
-                <div id="rtKpiCompleted" class="font-mono text-2xl font-bold text-emerald-600 mt-1">0</div>
+                <div class="text-[11px] font-bold uppercase tracking-wider text-emerald-700/80">Completed</div>
+                <div id="rtKpiCompleted" class="font-mono text-[24px] leading-tight font-bold text-emerald-600 mt-1">0</div>
               </div>
               <div class="p-3.5 rounded-xl bg-slate-100/80 border border-slate-300 border-t-4 border-t-[#0A0A0B]">
-                <div class="text-[10px] font-semibold uppercase tracking-wider text-slate-500">Total Tasks</div>
-                <div id="rtKpiTotal" class="font-mono text-2xl font-bold text-slate-900 mt-1">0</div>
+                <div class="text-[11px] font-bold uppercase tracking-wider text-slate-600">Total Tasks</div>
+                <div id="rtKpiTotal" class="font-mono text-[24px] leading-tight font-bold text-slate-900 mt-1">0</div>
               </div>
             </div>
 
@@ -839,7 +839,7 @@
           </div>
 
           <!-- Split Execution Grid -->
-          <div id="rtSplitGrid" class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+          <div id="rtSplitGrid" class="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
             <!-- Left 5 Cols: Active Execution Cards (Hidden when Supervisor selects All Personnel) -->
             <div id="rtLeftCardsCol" class="hidden lg:col-span-5 space-y-3 max-h-[75vh] overflow-y-auto custom-scroll pr-1">
               <div class="flex items-center justify-between">
@@ -853,7 +853,7 @@
               <div class="exec-panel p-5">
                 <div class="flex items-center justify-between flex-wrap gap-3 border-b border-slate-100 pb-3.5 mb-4">
                   <div class="flex items-center gap-2.5">
-                    <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                    <i data-lucide="list-checks" class="w-4 h-4 text-[#1A64FF] shrink-0"></i>
                     <div>
                       <h4 class="text-xs font-bold uppercase tracking-wider text-slate-900">Live Session Timeline</h4>
                       <p class="text-[11px] text-slate-400">Click any activity entry to inspect notes and attached links</p>
@@ -2587,10 +2587,11 @@
       const showLeftCards = (!currentUser.isSupervisor) || (memberFilter !== 'ALL');
       if (showLeftCards) {
         leftCol.classList.remove('hidden');
-        rightCol.className = 'lg:col-span-7 space-y-3';
+        leftCol.className = 'xl:col-span-5 space-y-3 max-h-[75vh] overflow-y-auto custom-scroll pr-1';
+        rightCol.className = 'xl:col-span-7 space-y-3 min-w-0';
       } else {
         leftCol.classList.add('hidden');
-        rightCol.className = 'lg:col-span-12 space-y-3';
+        rightCol.className = 'xl:col-span-12 space-y-3 min-w-0';
       }
 
       const cardsGrid = document.getElementById('rtActiveCardsGrid');
@@ -2654,84 +2655,113 @@
             <p class="text-xs font-medium text-slate-400">No session activity matching current filters.</p>
           </div>`;
       } else {
-        // Fluid adaptive grid: spacious and balanced on full-screen, clean & non-cramped on split-view or smaller laptops
-        const gridColsClass = showLeftCards
-          ? '2xl:grid-cols-[minmax(150px,1fr)_minmax(170px,1.25fr)_minmax(130px,1.1fr)_116px_112px_18px]'
-          : 'lg:grid-cols-[minmax(200px,1.1fr)_minmax(220px,1.25fr)_minmax(200px,1.4fr)_120px_116px_18px]';
+        if (showLeftCards) {
+          // SPLIT-VIEW MODE: Clean, spacious 2-tier cards without left dots so full card width is usable on small screens
+          streamBox.innerHTML =
+            `<div class="space-y-2.5 my-1">` +
+            filteredLogs.map(l => {
+              const act = String(l.action || '').toLowerCase();
+              const isNotStarted = (act === 'not started');
+              const rowHighlight = (act === 'in progress' || act === 'start')
+                ? 'bg-amber-50/35 border-amber-300 hover:border-amber-400'
+                : (isNotStarted ? 'bg-slate-50/50 border-slate-200/80 hover:bg-white hover:border-slate-300' : 'bg-white border-slate-200 hover:border-slate-300');
 
-        const headerVisibleClass = showLeftCards ? 'hidden 2xl:grid' : 'hidden lg:grid';
+              return `
+                <div onclick="openDetailInspectorById(${l.id}, '${esc(l.action)}', '${esc(l.start_time || '-')}')" class="p-3.5 rounded-xl border ${rowHighlight} transition cursor-pointer group space-y-2">
+                  <!-- Row 1: PIC + Task Title on left | Status + Start Time + Arrow on right -->
+                  <div class="flex items-start justify-between gap-2.5 flex-wrap">
+                    <div class="flex items-center gap-2.5 min-w-0 flex-1">
+                      <span class="w-7 h-7 rounded-lg bg-slate-100 border border-slate-200 text-slate-700 font-bold text-xs flex items-center justify-center shrink-0">
+                        ${esc(String(l.pic || 'U').charAt(0).toUpperCase())}
+                      </span>
+                      <div class="min-w-0">
+                        <div class="text-[13px] font-bold text-slate-900 group-hover:text-[#1A64FF] transition leading-snug" title="${esc(l.task)}">${esc(l.task)}</div>
+                        <div class="text-[11.5px] font-medium text-slate-500 truncate">${esc(l.pic)}</div>
+                      </div>
+                    </div>
 
-        streamBox.innerHTML =
-          `<div class="${headerVisibleClass} ${gridColsClass} items-center gap-4 px-4 py-2.5 mb-2.5 ml-8 text-xs font-bold uppercase tracking-wider text-slate-600 bg-slate-50/90 rounded-lg border border-slate-200/70">
-            <div>Responsible (PIC)</div>
-            <div>Task & Division</div>
-            <div>Deliverable Details</div>
-            <div class="text-center">Status</div>
-            <div class="text-center">Start Time</div>
-            <div></div>
-          </div>` +
-          `<div class="relative pl-6 border-l-2 border-slate-200/80 space-y-3 ml-2 my-1">` +
-          filteredLogs.map(l => {
-            const act = String(l.action || '').toLowerCase();
-            const isNotStarted = (act === 'not started');
-            const nodeColor = (act === 'in progress' || act === 'start') ? 'bg-amber-500 ring-amber-100' :
-              (act === 'completed' || act === 'complete') ? 'bg-emerald-500 ring-emerald-100' :
-              (act === 'paused' || act === 'pause') ? 'bg-blue-500 ring-blue-100' :
-              (act === 'suspend' || act === 'suspended') ? 'bg-orange-500 ring-orange-100' :
-              (act === 'cancelled' || act === 'cancel') ? 'bg-red-500 ring-red-100' : 'bg-slate-400 ring-slate-100';
+                    <div class="flex items-center gap-2 shrink-0">
+                      ${getStatusBadge(l.action)}
+                      ${isNotStarted
+                        ? `<span class="font-mono text-[11.5px] text-slate-400 px-2.5 py-1 rounded-lg bg-slate-50 border border-slate-200/70">—</span>`
+                        : `<span class="inline-flex items-center gap-1 font-mono text-[11.5px] font-semibold px-2.5 py-1 rounded-lg bg-slate-50 border border-slate-200 text-slate-800 whitespace-nowrap"><i data-lucide="clock" class="w-3 h-3 text-slate-500 shrink-0"></i>${esc(l.start_time)}</span>`
+                      }
+                      <i data-lucide="chevron-right" class="w-4 h-4 text-slate-400 group-hover:text-slate-700 group-hover:translate-x-0.5 transition"></i>
+                    </div>
+                  </div>
 
-            const rowHighlight = (act === 'in progress' || act === 'start')
-              ? 'bg-amber-50/35 border-amber-300 hover:border-amber-400'
-              : (isNotStarted ? 'bg-slate-50/50 border-slate-200/80 hover:bg-white hover:border-slate-300' : 'bg-white border-slate-200 hover:border-slate-300');
-
-            return `
-              <div onclick="openDetailInspectorById(${l.id}, '${esc(l.action)}', '${esc(l.start_time || '-')}')" class="relative px-4 py-3.5 rounded-xl border ${rowHighlight} transition cursor-pointer group grid grid-cols-1 ${gridColsClass} items-center gap-4">
-                <!-- Timeline Node Dot -->
-                <span class="absolute -left-[31px] top-1/2 -translate-y-1/2 w-3 h-3 rounded-full ${nodeColor} ring-4"></span>
-
-                <!-- Col 1: Avatar + Responsible (PIC) -->
-                <div class="min-w-0 flex items-center gap-3">
-                  <span class="w-8 h-8 rounded-lg bg-slate-100 border border-slate-200 text-slate-700 font-bold text-xs flex items-center justify-center shrink-0">
-                    ${esc(String(l.pic || 'U').charAt(0).toUpperCase())}
-                  </span>
-                  <span class="text-sm font-semibold text-slate-800 truncate block" title="${esc(l.pic)}">${esc(l.pic)}</span>
-                </div>
-
-                <!-- Col 2: Task Title + Category + Division -->
-                <div class="min-w-0">
-                  <div class="text-sm font-bold text-slate-900 group-hover:text-[#1A64FF] transition truncate" title="${esc(l.task)}">${esc(l.task)}</div>
-                  <div class="flex items-center flex-wrap gap-1.5 mt-1">
-                    <span class="px-2 py-0.5 rounded bg-slate-100 border border-slate-200/80 text-[11px] font-semibold text-slate-700 shrink-0">${esc(l.category)}</span>
-                    <span class="text-[11px] font-medium text-slate-500 truncate">• ${esc(l.area)}</span>
+                  <!-- Row 2: Category & Division pills + Deliverable Details -->
+                  <div class="pt-2 border-t border-slate-100 flex items-center justify-between gap-2.5 flex-wrap">
+                    <div class="flex items-center gap-1.5 shrink-0">
+                      <span class="px-2 py-0.5 rounded bg-slate-100 border border-slate-200/80 text-[10.5px] font-semibold text-slate-700">${esc(l.category)}</span>
+                      <span class="text-[10.5px] font-medium text-slate-500">• ${esc(l.area)}</span>
+                    </div>
+                    <p class="text-xs text-slate-600 line-clamp-1 flex-1 min-w-[140px]" title="${esc(l.details || '-')}">${esc(l.details || '—')}</p>
                   </div>
                 </div>
+              `;
+            }).join('') +
+          `</div>`;
+        } else {
+          // FULL-WIDTH MODE (All Team): Clean 5-column aligned layout without left dots, harmonious on all screen widths
+          const gridColsClass = 'lg:grid-cols-[minmax(175px,1.05fr)_minmax(195px,1.25fr)_minmax(160px,1.4fr)_112px_108px_16px]';
+          streamBox.innerHTML =
+            `<div class="hidden lg:grid ${gridColsClass} items-center gap-3.5 px-4 py-2.5 mb-2 text-[11px] font-bold uppercase tracking-wider text-slate-600 bg-slate-50/90 rounded-lg border border-slate-200/70">
+              <div>Responsible (PIC)</div>
+              <div>Task & Division</div>
+              <div>Deliverable Details</div>
+              <div class="text-center">Status</div>
+              <div class="text-center">Start Time</div>
+              <div></div>
+            </div>` +
+            `<div class="space-y-2.5 my-1">` +
+            filteredLogs.map(l => {
+              const act = String(l.action || '').toLowerCase();
+              const isNotStarted = (act === 'not started');
+              const rowHighlight = (act === 'in progress' || act === 'start')
+                ? 'bg-amber-50/35 border-amber-300 hover:border-amber-400'
+                : (isNotStarted ? 'bg-slate-50/50 border-slate-200/80 hover:bg-white hover:border-slate-300' : 'bg-white border-slate-200 hover:border-slate-300');
 
-                <!-- Col 3: Deliverable Details -->
-                <div class="min-w-0">
-                  <p class="text-[13px] text-slate-600 truncate" title="${esc(l.details || '-')}">${esc(l.details || '—')}</p>
-                </div>
+              return `
+                <div onclick="openDetailInspectorById(${l.id}, '${esc(l.action)}', '${esc(l.start_time || '-')}')" class="px-4 py-3 rounded-xl border ${rowHighlight} transition cursor-pointer group grid grid-cols-1 ${gridColsClass} items-center gap-3.5">
+                  <div class="min-w-0 flex items-center gap-2.5">
+                    <span class="w-7 h-7 rounded-lg bg-slate-100 border border-slate-200 text-slate-700 font-bold text-xs flex items-center justify-center shrink-0">
+                      ${esc(String(l.pic || 'U').charAt(0).toUpperCase())}
+                    </span>
+                    <span class="text-[13px] font-semibold text-slate-800 truncate block" title="${esc(l.pic)}">${esc(l.pic)}</span>
+                  </div>
 
-                <!-- Col 4: Status Pill -->
-                <div class="flex items-center ${showLeftCards ? '2xl:justify-center' : 'lg:justify-center'} shrink-0">
-                  ${getStatusBadge(l.action)}
-                </div>
+                  <div class="min-w-0">
+                    <div class="text-[13px] font-bold text-slate-900 group-hover:text-[#1A64FF] transition truncate" title="${esc(l.task)}">${esc(l.task)}</div>
+                    <div class="flex items-center flex-wrap gap-1.5 mt-0.5">
+                      <span class="px-1.5 py-0.5 rounded bg-slate-100 border border-slate-200/80 text-[10.5px] font-semibold text-slate-700 shrink-0">${esc(l.category)}</span>
+                      <span class="text-[10.5px] font-medium text-slate-500 truncate">• ${esc(l.area)}</span>
+                    </div>
+                  </div>
 
-                <!-- Col 5: Start Timestamp -->
-                <div class="flex items-center ${showLeftCards ? '2xl:justify-center' : 'lg:justify-center'} shrink-0">
-                  ${isNotStarted
-                    ? `<span class="font-mono text-xs text-slate-400 px-3 py-1 rounded-lg bg-slate-50 border border-slate-200/70 w-full text-center">—</span>`
-                    : `<span class="inline-flex items-center justify-center gap-1.5 font-mono text-xs font-semibold px-2.5 py-1 rounded-lg bg-slate-50 border border-slate-200 text-slate-800 w-full whitespace-nowrap"><i data-lucide="clock" class="w-3.5 h-3.5 text-slate-500 shrink-0"></i>${esc(l.start_time)}</span>`
-                  }
-                </div>
+                  <div class="min-w-0">
+                    <p class="text-xs text-slate-600 truncate" title="${esc(l.details || '-')}">${esc(l.details || '—')}</p>
+                  </div>
 
-                <!-- Col 6: Inspect Arrow -->
-                <div class="hidden ${showLeftCards ? '2xl:flex' : 'lg:flex'} justify-end shrink-0">
-                  <i data-lucide="chevron-right" class="w-4 h-4 text-slate-400 group-hover:text-slate-700 group-hover:translate-x-0.5 transition"></i>
+                  <div class="flex items-center lg:justify-center shrink-0">
+                    ${getStatusBadge(l.action)}
+                  </div>
+
+                  <div class="flex items-center lg:justify-center shrink-0">
+                    ${isNotStarted
+                      ? `<span class="font-mono text-[11.5px] text-slate-400 px-2.5 py-1 rounded-lg bg-slate-50 border border-slate-200/70 w-full text-center">—</span>`
+                      : `<span class="inline-flex items-center justify-center gap-1 font-mono text-[11.5px] font-semibold px-2 py-1 rounded-lg bg-slate-50 border border-slate-200 text-slate-800 w-full whitespace-nowrap"><i data-lucide="clock" class="w-3 h-3 text-slate-500 shrink-0"></i>${esc(l.start_time)}</span>`
+                    }
+                  </div>
+
+                  <div class="hidden lg:flex justify-end shrink-0">
+                    <i data-lucide="chevron-right" class="w-4 h-4 text-slate-400 group-hover:text-slate-700 group-hover:translate-x-0.5 transition"></i>
+                  </div>
                 </div>
-              </div>
-            `;
-          }).join('') +
-        `</div>`;
+              `;
+            }).join('') +
+          `</div>`;
+        }
       }
       refreshIcons();
     }
