@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>IHFB Operations • Enterprise Task Portal</title>
+  <title>IHFB Task tracker • Enterprise Portal</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
@@ -175,7 +175,7 @@
           <img src="https://media.licdn.com/dms/image/v2/D560BAQHrsJvCS4HReg/company-logo_200_200/B56ZZeRENuHsAI-/0/1745338254638/i_hate_flying_bugs_el_salvador_logo?e=2147483647&v=beta&t=VUkNwS3viEJLgTmRFggDn68u7IFRo8Xt_Gew89SP9x0" alt="Logo" class="max-w-full max-h-full object-contain">
         </div>
         <div class="min-w-0">
-          <div class="text-sm font-bold text-white tracking-tight truncate">IHFB Operations</div>
+          <div class="text-sm font-bold text-white tracking-tight truncate">IHFB Task tracker</div>
           <div class="flex items-center gap-1 mt-1"><span class="w-3 h-0.5 bg-[#1A64FF] rounded-full"></span><span class="w-3 h-0.5 bg-[#EC4899] rounded-full"></span><span class="w-3 h-0.5 bg-[#10B981] rounded-full"></span><span class="text-[9px] font-semibold text-slate-500 uppercase tracking-widest ml-1">Governance</span></div>
         </div>
       </div>
@@ -538,11 +538,16 @@
               <!-- SUBSECTION 1: BATCH TASK RECORDING -->
               <div id="mySubSection-1" class="exec-panel p-6 space-y-5">
                 <div class="flex items-center justify-between border-b border-slate-100 pb-4">
-                  <div>
-                    <h3 class="text-sm font-bold text-slate-900">Batch Task Recording</h3>
-                    <p class="text-xs text-slate-500 mt-0.5">Queue one or multiple tasks. New entries initialize in <span class="font-semibold text-slate-700">Not Started</span> status.</p>
+                  <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-lg bg-blue-50 border border-blue-200 text-[#1A64FF] flex items-center justify-center shrink-0">
+                      <i data-lucide="layers" class="w-4 h-4"></i>
+                    </div>
+                    <div>
+                      <h3 class="text-sm font-bold text-slate-900">Batch Task Recording</h3>
+                      <p class="text-xs text-slate-500 mt-0.5">Queue one or multiple tasks. New entries initialize in <span class="font-semibold text-slate-700">Not Started</span> status.</p>
+                    </div>
                   </div>
-                  <span id="batchTaskCounterBadge" class="font-mono text-xs font-semibold px-2.5 py-1 rounded-md bg-slate-100 text-slate-700 border border-slate-200">1 queued</span>
+                  <span id="batchTaskCounterBadge" class="font-mono text-xs font-semibold px-2.5 py-1 rounded-md bg-blue-50 text-[#1A64FF] border border-blue-200">1 queued</span>
                 </div>
 
                 <div id="batchCardsContainer" class="space-y-4"></div>
@@ -1812,8 +1817,8 @@
           if (eff === 'in progress' || eff === 'start') count++;
         });
         totalInProg += count;
-        const activeStyle = count > 0 ? 'border-blue-300/80 bg-blue-50/30' : 'border-slate-200 bg-white';
-        const pillStyle = count > 0 ? 'bg-blue-100/80 text-blue-800 border-blue-200' : 'bg-slate-100 text-slate-500 border-slate-200';
+        const activeStyle = count > 0 ? 'border-amber-300 bg-amber-50/35' : 'border-slate-200 bg-white';
+        const pillStyle = count > 0 ? 'bg-amber-50 text-amber-800 border-amber-300' : 'bg-slate-100 text-slate-500 border-slate-200';
         return `
           <div onclick="filterRealtimeMember('${esc(m)}')" class="p-3.5 rounded-xl border ${activeStyle} hover:border-slate-400 flex items-center justify-between cursor-pointer transition group">
             <div class="flex items-center gap-2.5 min-w-0">
@@ -1981,24 +1986,24 @@
       const card = document.createElement('div');
       card.id = 'batchCard-' + id;
       card.dataset.cardId = id;
-      card.className = 'batch-card batch-card-distinct p-5 space-y-4';
+      card.className = 'batch-card batch-card-distinct p-5 space-y-4 overflow-hidden';
       card.innerHTML = `
-        <div class="flex items-center justify-between border-b border-slate-200 pb-3">
+        <div class="flex items-center justify-between bg-gradient-to-r from-blue-50/70 via-slate-50 to-white border-b border-slate-200 -mx-5 -mt-5 px-5 py-3">
           <span class="text-xs font-bold text-slate-900 flex items-center gap-2">
-            <span class="batch-seq-badge font-mono text-[11px] font-bold px-2.5 py-0.5 rounded-md bg-blue-50 text-blue-800 border border-blue-200">01</span>
+            <span class="batch-seq-badge font-mono text-[11px] font-bold px-2.5 py-0.5 rounded-md bg-[#1A64FF] text-white shadow-2xs">01</span>
             <span>Task Entry</span>
           </span>
-          <button type="button" onclick="removeBatchCard(${id})" class="batch-remove-btn inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-semibold transition cursor-pointer">
+          <button type="button" onclick="removeBatchCard(${id})" class="batch-remove-btn inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200/70 text-xs font-semibold transition cursor-pointer">
             <i data-lucide="trash-2" class="w-3 h-3"></i>
             <span>Remove</span>
           </button>
         </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
           <div>
             <label class="block text-[11px] font-semibold text-slate-600 uppercase tracking-wider mb-1">Category</label>
-            <div class="grid grid-cols-2 gap-1.5 p-1 rounded-lg bg-slate-100 border border-slate-200/80" id="bCatGroup-${id}" data-cat="Routine">
-              <button type="button" onclick="setBatchCardCat(${id}, 'Routine', this)" class="py-1.5 rounded-md text-xs font-semibold bg-white text-slate-900 shadow-2xs transition cursor-pointer">Routine</button>
+            <div class="grid grid-cols-2 gap-1.5 p-1 rounded-lg bg-slate-100/90 border border-slate-200" id="bCatGroup-${id}" data-cat="Routine">
+              <button type="button" onclick="setBatchCardCat(${id}, 'Routine', this)" class="py-1.5 rounded-md text-xs font-semibold bg-white text-[#1A64FF] border border-blue-200/80 shadow-2xs transition cursor-pointer">Routine</button>
               <button type="button" onclick="setBatchCardCat(${id}, 'On Demand', this)" class="py-1.5 rounded-md text-xs font-semibold text-slate-600 hover:text-slate-900 transition cursor-pointer">On Demand</button>
             </div>
           </div>
@@ -2087,7 +2092,7 @@
       grp.querySelectorAll('button').forEach(b => {
         b.className = 'py-1.5 rounded-md text-xs font-semibold text-slate-600 hover:text-slate-900 transition cursor-pointer';
       });
-      btn.className = 'py-1.5 rounded-md text-xs font-semibold bg-white text-slate-900 shadow-2xs transition cursor-pointer';
+      btn.className = 'py-1.5 rounded-md text-xs font-semibold bg-white text-[#1A64FF] border border-blue-200/80 shadow-2xs transition cursor-pointer';
       document.getElementById('bRoutineBox-' + id).classList.toggle('hidden', cat !== 'Routine');
       document.getElementById('bOnDemandBox-' + id).classList.toggle('hidden', cat !== 'On Demand');
     }
@@ -2274,12 +2279,9 @@
     }
 
     // ==================== 3. REAL-TIME MONITOR ====================
-    function getStatusBadge(status, isRealtime = false) {
+    function getStatusBadge(status) {
       const s = String(status || 'Not Started');
       const label = (s === 'Start') ? 'In progress' : (s === 'Pause') ? 'Paused' : (s === 'Complete') ? 'Completed' : (s === 'Cancel') ? 'Cancelled' : s;
-      if (!isRealtime) {
-        return `<span class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold bg-slate-100 text-slate-700 border border-slate-200 whitespace-nowrap">${esc(label)}</span>`;
-      }
       const map = {
         'Completed': 'bg-emerald-50 text-emerald-700 border-emerald-300',
         'Complete': 'bg-emerald-50 text-emerald-700 border-emerald-300',
@@ -2293,8 +2295,8 @@
         'Cancel': 'bg-red-50 text-red-700 border-red-300',
         'Not Started': 'bg-slate-100 text-slate-700 border-slate-300'
       };
-      const cls = map[s] || 'bg-slate-100 text-slate-600 border-slate-200';
-      return `<span class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-semibold border whitespace-nowrap ${cls}">${esc(label)}</span>`;
+      const cls = map[s] || 'bg-slate-100 text-slate-700 border-slate-300';
+      return `<span class="inline-flex items-center justify-center px-2.5 py-0.5 rounded-md text-[10px] font-semibold border whitespace-nowrap ${cls}">${esc(label)}</span>`;
     }
 
     function toggleRtTableScope(btn) {
@@ -2317,14 +2319,37 @@
       document.getElementById('btnBulkComplete').disabled = dis;
     }
 
+    function confirmCompleteTask(taskId) {
+      const t = allTasks.find(x => x.id === taskId);
+      const name = t ? t.task : 'this task';
+      openReasonModal(
+        'Confirm Task Completion',
+        `Are you sure you want to mark "${name}" as Completed? This action cannot be reverted once confirmed.`,
+        () => quickChangeStatus(taskId, 'Completed'),
+        false
+      );
+    }
+
     async function executeBulkRtAction(targetStatus) {
       const chks = Array.from(document.querySelectorAll('.rt-card-chk:checked'));
       if (!chks.length) return;
-      for (const c of chks) {
-        await quickChangeStatus(Number(c.dataset.id), targetStatus);
+      const runBulk = async () => {
+        for (const c of chks) {
+          await quickChangeStatus(Number(c.dataset.id), targetStatus);
+        }
+        document.getElementById('chkSelectAllRt').checked = false;
+        updateRtBulkCounter();
+      };
+      if (targetStatus === 'Completed') {
+        openReasonModal(
+          'Confirm Bulk Completion',
+          `Are you sure you want to mark ${chks.length} selected task(s) as Completed? This action cannot be reverted.`,
+          runBulk,
+          false
+        );
+      } else {
+        await runBulk();
       }
-      document.getElementById('chkSelectAllRt').checked = false;
-      updateRtBulkCounter();
     }
 
     function renderRealtimeView() {
@@ -2341,20 +2366,29 @@
         if (statusFilter !== 'ALL' && t.status !== statusFilter) return false;
         if (query && !(`${t.task} ${t.task_details} ${t.pic}`).toLowerCase().includes(query)) return false;
         return true;
-      });
+      }).sort((a, b) => Number(a.id) - Number(b.id));
 
-      // Build 1-to-1 latest realtime_log lookup per (pic + task) for today
+      // Build lookup of latest valid start_time per (pic + task) across realtime_log
       const latestRtByKey = {};
       allRealtimeLogs.forEach(l => {
-        if (l.log_date !== today && l.action !== 'Suspend') return;
         const k = `${String(l.pic).trim().toLowerCase()}||${String(l.task).trim().toLowerCase()}`;
-        if (!latestRtByKey[k]) latestRtByKey[k] = l;
+        if (!latestRtByKey[k]) {
+          latestRtByKey[k] = l;
+        } else if ((!latestRtByKey[k].start_time || latestRtByKey[k].start_time === '-') && l.start_time && l.start_time !== '-') {
+          latestRtByKey[k] = l;
+        }
       });
 
-      // Build unified, deduplicated timeline directly from task_log (today's tasks + all open/Not Started/Paused/In progress/Suspend tasks)
-      const timelineRows = [];
-      const consumedRtKeys = new Set();
+      // Helper to extract HH:MM:SS fallback from created_at if needed
+      const extractTimeFallback = (isoTs) => {
+        if (!isoTs) return timeNowStr();
+        const d = new Date(isoTs);
+        if (isNaN(d.getTime())) return timeNowStr();
+        return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0') + ':' + String(d.getSeconds()).padStart(2, '0');
+      };
 
+      // Build unified timeline from task_log (today's tasks + all open/Not Started/Paused/In progress/Suspend tasks)
+      const timelineRows = [];
       allTasks.forEach(t => {
         const st = String(t.status || 'Not Started');
         const isOpenOrNotStarted = (st !== 'Completed' && st !== 'Cancelled');
@@ -2362,8 +2396,17 @@
         if (!isOpenOrNotStarted && !isTodayRecord) return;
 
         const k = `${String(t.pic).trim().toLowerCase()}||${String(t.task).trim().toLowerCase()}`;
-        const rtMatch = !consumedRtKeys.has(k) ? latestRtByKey[k] : null;
-        if (rtMatch) consumedRtKeys.add(k);
+        const rtMatch = latestRtByKey[k];
+
+        // Show Start Timestamp for ALL statuses EXCEPT Not Started
+        let displayStart = '-';
+        if (st !== 'Not Started') {
+          if (rtMatch && rtMatch.start_time && rtMatch.start_time !== '-') {
+            displayStart = rtMatch.start_time;
+          } else {
+            displayStart = extractTimeFallback(t.created_at);
+          }
+        }
 
         timelineRows.push({
           id: t.id,
@@ -2372,10 +2415,19 @@
           task: t.task,
           details: t.task_details || '',
           action: st,
-          start_time: (st !== 'Not Started' && rtMatch && rtMatch.start_time) ? rtMatch.start_time : '-',
+          start_time: displayStart,
           duration: (rtMatch && rtMatch.duration) ? rtMatch.duration : '-',
           area: t.area || 'Operations'
         });
+      });
+
+      // Sort: 1) All non-"Not Started" tasks first in exact registration order (id asc)
+      //       2) All "Not Started" tasks at the very end, also in exact registration order (id asc)
+      timelineRows.sort((a, b) => {
+        const aNotStarted = String(a.action).toLowerCase() === 'not started';
+        const bNotStarted = String(b.action).toLowerCase() === 'not started';
+        if (aNotStarted !== bNotStarted) return aNotStarted ? 1 : -1;
+        return Number(a.id) - Number(b.id);
       });
 
       // Scope button (`Scope: All Team` vs `Scope: My Tasks`) works for ALL users
@@ -2452,7 +2504,7 @@
                   <button type="button" onclick="quickChangeStatus(${t.id}, '${isPaused ? 'In progress' : 'Paused'}')" class="px-2.5 py-1 rounded-md text-[11px] font-semibold ${isPaused ? 'bg-blue-600 text-white' : 'bg-slate-100 hover:bg-blue-600 text-slate-700 hover:text-white'} transition cursor-pointer">
                     Pause
                   </button>
-                  <button type="button" onclick="quickChangeStatus(${t.id}, 'Completed')" class="px-2.5 py-1 rounded-md text-[11px] font-semibold bg-slate-100 hover:bg-emerald-600 text-slate-700 hover:text-white transition cursor-pointer">
+                  <button type="button" onclick="confirmCompleteTask(${t.id})" class="px-2.5 py-1 rounded-md text-[11px] font-semibold bg-slate-100 hover:bg-emerald-600 text-slate-700 hover:text-white transition cursor-pointer">
                     Done
                   </button>
                   <select onchange="handleMoreActionDropdown(${t.id}, this.value); this.value='';" class="px-2 py-1 rounded-md border border-slate-200 bg-white text-[11px] font-semibold text-slate-600 cursor-pointer">
@@ -2478,9 +2530,20 @@
             <p class="text-xs font-medium text-slate-400">No session activity matching current filters.</p>
           </div>`;
       } else {
-        streamBox.innerHTML = `<div class="relative pl-6 border-l-2 border-slate-200/80 space-y-3 ml-2 my-1">` +
+        streamBox.innerHTML =
+          `<div class="hidden xl:grid xl:grid-cols-[36px_minmax(200px,1.25fr)_190px_minmax(180px,1.35fr)_105px_100px_20px] items-center gap-3 px-4 py-2 mb-2 ml-8 text-[10px] font-bold uppercase tracking-wider text-slate-400 border-b border-slate-100">
+            <div></div>
+            <div>Task & Division</div>
+            <div>Responsible (PIC)</div>
+            <div>Deliverable Details</div>
+            <div class="text-center">Status</div>
+            <div class="text-center">Start Time</div>
+            <div></div>
+          </div>` +
+          `<div class="relative pl-6 border-l-2 border-slate-200/80 space-y-2.5 ml-2 my-1">` +
           filteredLogs.map(l => {
             const act = String(l.action || '').toLowerCase();
+            const isNotStarted = (act === 'not started');
             const nodeColor = (act === 'in progress' || act === 'start') ? 'bg-amber-500 ring-amber-100' :
               (act === 'completed' || act === 'complete') ? 'bg-emerald-500 ring-emerald-100' :
               (act === 'paused' || act === 'pause') ? 'bg-blue-500 ring-blue-100' :
@@ -2488,37 +2551,54 @@
               (act === 'cancelled' || act === 'cancel') ? 'bg-red-500 ring-red-100' : 'bg-slate-400 ring-slate-100';
 
             const rowHighlight = (act === 'in progress' || act === 'start')
-              ? 'bg-amber-50/25 border-amber-200/80 hover:border-amber-400'
-              : 'bg-slate-50/50 border-slate-200/80 hover:bg-white hover:border-slate-300';
+              ? 'bg-amber-50/30 border-amber-300/90 hover:border-amber-400'
+              : (isNotStarted ? 'bg-slate-50/40 border-slate-200/70 hover:bg-white hover:border-slate-300' : 'bg-white border-slate-200 hover:border-slate-300');
 
             return `
-              <div onclick="openDetailInspectorById(${l.id}, '${esc(l.action)}', '${esc(l.start_time || '-')}')" class="relative p-3.5 rounded-xl border ${rowHighlight} transition cursor-pointer group flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div onclick="openDetailInspectorById(${l.id}, '${esc(l.action)}', '${esc(l.start_time || '-')}')" class="relative px-4 py-3 rounded-xl border ${rowHighlight} transition cursor-pointer group grid grid-cols-1 xl:grid-cols-[36px_minmax(200px,1.25fr)_190px_minmax(180px,1.35fr)_105px_100px_20px] items-center gap-3">
                 <!-- Timeline Node Dot -->
-                <span class="absolute -left-[31px] top-5 w-3 h-3 rounded-full ${nodeColor} ring-4"></span>
+                <span class="absolute -left-[31px] top-1/2 -translate-y-1/2 w-3 h-3 rounded-full ${nodeColor} ring-4"></span>
 
-                <div class="flex items-start gap-3 min-w-0 flex-1">
-                  <span class="w-8 h-8 rounded-lg bg-white border border-slate-200 text-slate-700 font-bold text-xs flex items-center justify-center shrink-0 mt-0.5 shadow-2xs">
-                    ${esc(String(l.pic || 'U').charAt(0).toUpperCase())}
-                  </span>
-                  <div class="min-w-0 flex-1">
-                    <div class="flex items-center flex-wrap gap-2">
-                      <span class="text-xs font-bold text-slate-900 group-hover:text-[#1A64FF] transition">${esc(l.task)}</span>
-                      <span class="px-2 py-0.5 rounded bg-white border border-slate-200 text-[10px] font-semibold text-slate-600">${esc(l.category)}</span>
-                      <span class="text-[10px] font-medium text-slate-400">• ${esc(l.area)}</span>
-                    </div>
-                    <div class="flex items-center gap-2 mt-1 text-[11.5px] text-slate-500">
-                      <span class="font-semibold text-slate-700 shrink-0">${esc(l.pic)}</span>
-                      ${l.details ? `<span class="text-slate-300">|</span><span class="truncate">${esc(l.details)}</span>` : ''}
-                    </div>
+                <!-- Col 1: Avatar -->
+                <div class="hidden xl:flex w-8 h-8 rounded-lg bg-slate-100 border border-slate-200 text-slate-700 font-bold text-xs items-center justify-center shrink-0">
+                  ${esc(String(l.pic || 'U').charAt(0).toUpperCase())}
+                </div>
+
+                <!-- Col 2: Task Title + Category + Division -->
+                <div class="min-w-0">
+                  <div class="text-xs font-bold text-slate-900 group-hover:text-[#1A64FF] transition truncate" title="${esc(l.task)}">${esc(l.task)}</div>
+                  <div class="flex items-center gap-1.5 mt-1">
+                    <span class="px-1.5 py-0.5 rounded bg-slate-100 border border-slate-200/80 text-[10px] font-semibold text-slate-600">${esc(l.category)}</span>
+                    <span class="text-[10px] font-medium text-slate-400 truncate">• ${esc(l.area)}</span>
                   </div>
                 </div>
 
-                <div class="flex items-center gap-2.5 shrink-0 self-end sm:self-center">
-                  ${getStatusBadge(l.action, true)}
-                  <span class="inline-flex items-center gap-1 font-mono text-[11px] font-medium px-2.5 py-1 rounded-md bg-white border border-slate-200 text-slate-600">
-                    <i data-lucide="clock" class="w-3 h-3 text-slate-400"></i>
-                    ${esc(l.start_time || '-')}
-                  </span>
+                <!-- Col 3: Fixed-Width PIC Column (Standard alignment for short & long names) -->
+                <div class="min-w-0 flex items-center gap-2">
+                  <span class="xl:hidden w-6 h-6 rounded-md bg-slate-100 border border-slate-200 text-slate-700 font-bold text-[10px] flex items-center justify-center shrink-0">${esc(String(l.pic || 'U').charAt(0).toUpperCase())}</span>
+                  <span class="text-xs font-semibold text-slate-700 truncate block w-full" title="${esc(l.pic)}">${esc(l.pic)}</span>
+                </div>
+
+                <!-- Col 4: Aligned Deliverable Details -->
+                <div class="min-w-0">
+                  <p class="text-[11.5px] text-slate-500 truncate" title="${esc(l.details || '-')}">${esc(l.details || '—')}</p>
+                </div>
+
+                <!-- Col 5: Aligned Status Pill -->
+                <div class="flex xl:justify-center">
+                  ${getStatusBadge(l.action)}
+                </div>
+
+                <!-- Col 6: Aligned Start Timestamp (Shown for all except Not Started) -->
+                <div class="flex xl:justify-center">
+                  ${isNotStarted
+                    ? `<span class="font-mono text-[11px] text-slate-400 px-2.5 py-1 rounded-md bg-slate-50 border border-slate-200/70 w-full text-center">—</span>`
+                    : `<span class="inline-flex items-center justify-center gap-1 font-mono text-[11px] font-semibold px-2.5 py-1 rounded-md bg-slate-50 border border-slate-200 text-slate-700 w-full"><i data-lucide="clock" class="w-3 h-3 text-slate-400"></i>${esc(l.start_time)}</span>`
+                  }
+                </div>
+
+                <!-- Col 7: Inspect Arrow -->
+                <div class="hidden xl:flex justify-end">
                   <i data-lucide="chevron-right" class="w-4 h-4 text-slate-300 group-hover:text-slate-600 group-hover:translate-x-0.5 transition"></i>
                 </div>
               </div>
@@ -2542,13 +2622,23 @@
       }
     }
 
-    function openReasonModal(title, sub, onConfirm) {
+    function openReasonModal(title, sub, onConfirm, requireInput = true) {
       document.getElementById('reasonModalTitle').textContent = title;
       document.getElementById('reasonModalSub').textContent = sub;
-      document.getElementById('reasonModalInput').value = '';
-      document.getElementById('btnConfirmReason').onclick = () => {
-        const val = document.getElementById('reasonModalInput').value.trim();
-        if (!val) return showToast('Justification note is required.', true);
+      const inp = document.getElementById('reasonModalInput');
+      const inpContainer = inp ? inp.parentElement : null;
+      if (inp) inp.value = '';
+      if (inpContainer) inpContainer.classList.toggle('hidden', !requireInput);
+
+      const btn = document.getElementById('btnConfirmReason');
+      btn.className = requireInput
+        ? 'px-4 py-2 rounded-lg bg-[#0F172A] hover:bg-slate-800 text-white text-xs font-semibold cursor-pointer'
+        : 'px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold cursor-pointer';
+      btn.textContent = requireInput ? 'Confirm Transition' : 'Yes, Mark as Completed';
+
+      btn.onclick = () => {
+        const val = inp ? inp.value.trim() : '';
+        if (requireInput && !val) return showToast('Justification note is required.', true);
         closeReasonModal();
         onConfirm(val);
       };
@@ -2590,8 +2680,10 @@
             duration = mins < 60 ? `${mins}m` : `${Math.floor(mins/60)}h ${mins%60}m`;
           }
         }
+        const preservedStart = (existingLog.start_time && existingLog.start_time !== '-') ? existingLog.start_time : timeStr;
         await sb.from('realtime_log').update({
           action: newStatus,
+          start_time: preservedStart,
           end_time: (newStatus === 'Completed' || newStatus === 'Paused') ? timeStr : existingLog.end_time,
           duration: duration,
           cause: updatedCause,
@@ -2746,10 +2838,10 @@
             <td class="px-3 py-3 text-center font-mono text-slate-600">${onDemand}</td>
             <td class="px-3 py-3 text-center"><span class="px-2 py-0.5 rounded-md bg-slate-100 font-mono font-bold text-slate-900">${rows.length}</span></td>
             <td class="px-3 py-3 text-center"><span class="px-2 py-0.5 rounded-md ${comp > 0 ? 'bg-emerald-50 text-emerald-700 font-bold' : 'text-slate-400'} font-mono">${comp}</span></td>
-            <td class="px-3 py-3 text-center"><span class="px-2 py-0.5 rounded-md ${prog > 0 ? 'bg-blue-50 text-[#1A64FF] font-bold' : 'text-slate-400'} font-mono">${prog}</span></td>
+            <td class="px-3 py-3 text-center"><span class="px-2 py-0.5 rounded-md ${prog > 0 ? 'bg-amber-50 text-amber-800 font-bold' : 'text-slate-400'} font-mono">${prog}</span></td>
             <td class="px-3 py-3 text-center font-mono ${paus > 0 ? 'text-indigo-700 font-semibold' : 'text-slate-400'}">${paus}</td>
             <td class="px-3 py-3 text-center font-mono text-slate-500">${notS}</td>
-            <td class="px-3 py-3 text-center font-mono text-slate-600">${susp}</td>
+            <td class="px-3 py-3 text-center font-mono ${susp > 0 ? 'text-orange-700 font-semibold' : 'text-slate-400'}">${susp}</td>
             <td class="px-3 py-3 text-center"><span class="px-2 py-0.5 rounded-md ${over > 0 ? 'bg-rose-50 text-rose-700 font-bold' : 'text-slate-300'} font-mono">${over}</span></td>
             <td class="px-5 py-3">
               <div class="flex items-center gap-2">
@@ -2995,6 +3087,9 @@
       const id = Number(document.getElementById('editTaskId').value);
       const prevTask = allTasks.find(x => x.id === id);
       const status = document.getElementById('editTaskStatus').value;
+      if (prevTask && prevTask.status !== 'Completed' && status === 'Completed') {
+        if (!confirm('Are you sure you want to mark this task as Completed? This status cannot be reverted once saved.')) return;
+      }
       const due = document.getElementById('editTaskDue').value;
       const updates = {
         task: document.getElementById('editTaskName').value.trim(),
