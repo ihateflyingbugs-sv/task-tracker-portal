@@ -2825,7 +2825,17 @@
         </div>
       `).join('');
 
-      const members = [...new Set(allAccess.map(a => String(a.member || '').trim()).filter(Boolean))].sort();
+      const members = [...new Set(allAccess.map(a => String(a.member || '').trim()).filter(Boolean))].sort((a, b) => {
+        const rowsA = win.filter(t => t.pic === a);
+        const rowsB = win.filter(t => t.pic === b);
+        const compA = rowsA.filter(r => r.status === 'Completed').length;
+        const compB = rowsB.filter(r => r.status === 'Completed').length;
+        const pctA = rowsA.length > 0 ? (compA / rowsA.length) : -1;
+        const pctB = rowsB.length > 0 ? (compB / rowsB.length) : -1;
+        if (pctB !== pctA) return pctB - pctA;
+        if (compB !== compA) return compB - compA;
+        return a.localeCompare(b);
+      });
       const rowHtml = (m, rows, isTotal = false) => {
         const routine = rows.filter(r => (r.category || 'Routine') === 'Routine').length;
         const onDemand = rows.filter(r => r.category !== 'Routine').length;
