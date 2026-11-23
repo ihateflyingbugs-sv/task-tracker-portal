@@ -2733,14 +2733,19 @@
         return true;
       }).sort((a, b) => Number(a.id) - Number(b.id));
 
-      // Build lookup of latest valid start_time per (pic + task + task_details) across realtime_log
-      const latestRtByKey = {};
-      allRealtimeLogs.forEach(l => {
+      // Build 1-to-1 queues of realtime_log entries per (pic + task + task_details), prioritizing today's logs
+      const todayRtQueues = {};
+      const fallbackRtByKey = {};
+      // Sort ascending by id so 1st task_log pairs with 1st realtime_log, 2nd with 2nd, etc.
+      const rtAsc = [...allRealtimeLogs].sort((a, b) => Number(a.id) - Number(b.id));
+      rtAsc.forEach(l => {
         const k = makeTaskIdentityKey(l.pic, l.task, l.task_details);
-        if (!latestRtByKey[k]) {
-          latestRtByKey[k] = l;
-        } else if ((!latestRtByKey[k].start_time || latestRtByKey[k].start_time === '-') && l.start_time && l.start_time !== '-') {
-          latestRtByKey[k] = l;
+        if (l.log_date === today) {
+          if (!todayRtQueues[k]) todayRtQueues[k] = [];
+          todayRtQueues[k].push(l);
+        }
+        if (!fallbackRtByKey[k] || (l.start_time && l.start_time !== '-')) {
+          fallbackRtByKey[k] = l;
         }
       });
 
@@ -2752,16 +2757,19 @@
         return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0') + ':' + String(d.getSeconds()).padStart(2, '0');
       };
 
-      // Build unified timeline from task_log (today's tasks + all open/Not Started/Paused/In progress/Suspend tasks)
+      // Build unified timeline from task_log in ascending ID order so 1-to-1 queue pairing is exact
       const timelineRows = [];
-      allTasks.forEach(t => {
+      const tasksAsc = [...allTasks].sort((a, b) => Number(a.id) - Number(b.id));
+      tasksAsc.forEach(t => {
         const st = String(t.status || 'Not Started');
         const isOpenOrNotStarted = (st !== 'Completed' && st !== 'Cancelled');
         const isTodayRecord = (t.start_date === today);
         if (!isOpenOrNotStarted && !isTodayRecord) return;
 
         const k = makeTaskIdentityKey(t.pic, t.task, t.task_details);
-        const rtMatch = latestRtByKey[k];
+        const rtMatch = (todayRtQueues[k] && todayRtQueues[k].length > 0)
+          ? todayRtQueues[k].shift()
+          : fallbackRtByKey[k];
 
         // Show Start Timestamp for ALL statuses EXCEPT Not Started
         let displayStart = '-';
@@ -2773,10 +2781,6 @@
           }
         }
 
-        const rtTimeMs = (rtMatch && rtMatch.updated_at) ? new Date(rtMatch.updated_at).getTime() : 0;
-        const taskTimeMs = t.created_at ? new Date(t.created_at).getTime() : 0;
-        const sortTs = Math.max(isNaN(rtTimeMs) ? 0 : rtTimeMs, isNaN(taskTimeMs) ? 0 : taskTimeMs);
-
         timelineRows.push({
           id: t.id,
           pic: t.pic,
@@ -2786,8 +2790,7 @@
           action: st,
           start_time: displayStart,
           duration: (rtMatch && rtMatch.duration) ? rtMatch.duration : '-',
-          area: t.area || 'Operations',
-          sort_ts: sortTs
+          area: t.area || 'Operations'
         });
       });
 
@@ -2799,8 +2802,8 @@
         return (Number(m[1]) * 3600) + (Number(m[2]) * 60) + Number(m[3] || 0);
       };
 
-      // Sort: 1) All non-"Not Started" tasks first, ordered strictly by START TIME descending (most recent hour first)
-      //       2) All "Not Started" tasks at the VERY END, ordered from most recent to oldest (id desc)
+      // Sort: 1) All non-"Not Started" tasks first, ordered strictly by START TIME descending (most recent start hour first, independent of status changes)
+      //       2) All "Not Started" tasks at the VERY END, ordered by id desc
       timelineRows.sort((a, b) => {
         const aNotStarted = String(a.action).toLowerCase() === 'not started';
         const bNotStarted = String(b.action).toLowerCase() === 'not started';
@@ -3091,10 +3094,16 @@
         }
 
         const targetIdentity = makeTaskIdentityKey(task.pic, task.task, task.task_details);
-        const existingTodayLog = allRealtimeLogs.find(l =>
-          l.log_date === today &&
-          makeTaskIdentityKey(l.pic, l.task, l.task_details) === targetIdentity
-        );
+        // Find nth ordinal position of this task among today's matching task_log entries so independent tasks never overwrite each other
+        const sameIdentityTasksToday = allTasks
+          .filter(x => (x.start_date === today || x.status !== 'Not Started') && makeTaskIdentityKey(x.pic, x.task, x.task_details) === targetIdentity)
+          .sort((a, b) => Number(a.id) - Number(b.id));
+        const taskOrdinal = Math.max(0, sameIdentityTasksToday.findIndex(x => x.id === task.id));
+
+        const matchingRtTodayAsc = allRealtimeLogs
+          .filter(l => l.log_date === today && makeTaskIdentityKey(l.pic, l.task, l.task_details) === targetIdentity)
+          .sort((a, b) => Number(a.id) - Number(b.id));
+        const existingTodayLog = matchingRtTodayAsc[taskOrdinal] || null;
 
         if (existingTodayLog) {
           let duration = existingTodayLog.duration;
@@ -3111,11 +3120,11 @@
             start_time: preservedStart,
             end_time: (newStatus === 'Completed' || newStatus === 'Paused') ? timeStr : existingTodayLog.end_time,
             duration: duration,
-            cause: updatedCause,
-            updated_at: new Date().toISOString()
+            cause: updatedCause
           };
           Object.assign(existingTodayLog, rtPayload);
-          await sb.from('realtime_log').update(rtPayload).eq('id', existingTodayLog.id);
+          const { error: rtUpdErr } = await sb.from('realtime_log').update(rtPayload).eq('id', existingTodayLog.id);
+          if (rtUpdErr) console.error('realtime_log update error:', rtUpdErr);
         } else {
           let initialDuration = '-';
           if (newStatus === 'Completed') {
@@ -3130,17 +3139,25 @@
             pic: task.pic,
             task: task.task,
             category: task.category,
-            task_details: task.task_details,
+            task_details: task.task_details || '',
             action: newStatus,
             start_time: timeStr,
             end_time: (newStatus === 'Completed' || newStatus === 'Paused') ? timeStr : '-',
             duration: initialDuration,
             log_date: today,
             cause: updatedCause,
-            area: task.area
+            area: task.area || 'Operations',
+            link_1: task.link_1 || '',
+            link_2: task.link_2 || '',
+            link_3: task.link_3 || ''
           };
-          const { data: insertedRt } = await sb.from('realtime_log').insert([newRtRow]).select().maybeSingle();
-          if (insertedRt) allRealtimeLogs.unshift(insertedRt);
+          const { data: insertedRt, error: rtInsErr } = await sb.from('realtime_log').insert([newRtRow]).select().maybeSingle();
+          if (rtInsErr) {
+            console.error('realtime_log insert error:', rtInsErr);
+            showToast('Warning: realtime_log sync issue: ' + rtInsErr.message, true);
+          } else if (insertedRt) {
+            allRealtimeLogs.unshift(insertedRt);
+          }
         }
 
         showToast(`Status saved: ${newStatus}`);
@@ -3358,7 +3375,7 @@
 
       const durByDateMap = {};
       const durFallbackMap = {};
-      allRealtimeLogs.forEach(r => {
+      [...allRealtimeLogs].sort((a, b) => Number(b.id) - Number(a.id)).forEach(r => {
         if (r.duration && r.duration !== '-') {
           const baseKey = makeTaskIdentityKey(r.pic, r.task, r.task_details);
           const dateKey = `${baseKey}||${String(r.log_date || '').trim()}`;
@@ -3607,10 +3624,16 @@
         if (prevTask) {
           const today = todayISO();
           const prevIdentity = makeTaskIdentityKey(prevTask.pic, prevTask.task, prevTask.task_details);
-          const existingTodayLog = allRealtimeLogs.find(l =>
-            l.log_date === today &&
-            makeTaskIdentityKey(l.pic, l.task, l.task_details) === prevIdentity
-          );
+          const sameIdentityTasksToday = allTasks
+            .filter(x => (x.start_date === today || x.status !== 'Not Started') && makeTaskIdentityKey(x.pic, x.task, x.task_details) === prevIdentity)
+            .sort((a, b) => Number(a.id) - Number(b.id));
+          const taskOrdinal = Math.max(0, sameIdentityTasksToday.findIndex(x => x.id === prevTask.id));
+
+          const matchingRtTodayAsc = allRealtimeLogs
+            .filter(l => l.log_date === today && makeTaskIdentityKey(l.pic, l.task, l.task_details) === prevIdentity)
+            .sort((a, b) => Number(a.id) - Number(b.id));
+          const existingTodayLog = matchingRtTodayAsc[taskOrdinal] || null;
+
           const rtUpdates = {
             task: updates.task,
             category: updates.category,
@@ -3620,15 +3643,17 @@
             cause: updates.cause_of_delay,
             link_1: updates.link_1,
             link_2: updates.link_2,
-            link_3: updates.link_3,
-            updated_at: new Date().toISOString()
+            link_3: updates.link_3
           };
           if (existingTodayLog) {
+            if ((!existingTodayLog.start_time || existingTodayLog.start_time === '-') && status !== 'Not Started') {
+              rtUpdates.start_time = timeNowStr();
+            }
             await sb.from('realtime_log').update(rtUpdates).eq('id', existingTodayLog.id);
-          } else {
+          } else if (status !== 'Not Started') {
             await sb.from('realtime_log').insert([Object.assign({
               pic: prevTask.pic,
-              start_time: status === 'Not Started' ? '-' : timeNowStr(),
+              start_time: timeNowStr(),
               end_time: (status === 'Completed' || status === 'Paused') ? timeNowStr() : '-',
               duration: '-',
               log_date: today
@@ -3658,9 +3683,14 @@
         await sb.from('deleted_tasks').insert([{
           pic: t.pic, task: t.task, category: t.category, status: t.status, deleted_by: currentUser.email
         }]);
-        let delQuery = sb.from('realtime_log').delete().ilike('pic', t.pic).ilike('task', t.task);
-        if (t.task_details) delQuery = delQuery.eq('task_details', t.task_details);
-        await delQuery;
+        const delIdentity = makeTaskIdentityKey(t.pic, t.task, t.task_details);
+        const rtMatchToDelete = allRealtimeLogs.find(l =>
+          l.log_date === t.start_date &&
+          makeTaskIdentityKey(l.pic, l.task, l.task_details) === delIdentity
+        );
+        if (rtMatchToDelete) {
+          await sb.from('realtime_log').delete().eq('id', rtMatchToDelete.id);
+        }
       }
       await sb.from('task_log').delete().eq('id', id);
       showToast(`Deleted: ${taskName}`);
