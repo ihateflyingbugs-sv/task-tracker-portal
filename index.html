@@ -1757,6 +1757,12 @@
       return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
     }
 
+    function canEditTaskRecord(task) {
+      if (!currentUser || !task) return false;
+      if (currentUser.isSupervisor) return true;
+      return String(task.pic || '').trim().toLowerCase() === String(currentUser.member || '').trim().toLowerCase();
+    }
+
     function makeTaskIdentityKey(pic, task, details) {
       return `${String(pic || '').trim().toLowerCase()}||${String(task || '').trim().toLowerCase()}||${String(details || '').trim().toLowerCase()}`;
     }
@@ -2220,23 +2226,29 @@
       onMgmtDefSelectChange();
       enhanceCustomSelects();
 
-      // Last 7 days table (includes tasks started in last 7 days OR active/open tasks due in last 7 days or later)
-      const from7 = shiftDaysISO(-6);
+      // Last 7 days table: ALWAYS keeps all tasks from the last 7 days regardless of status (Completed, Cancelled, Suspend, Paused, In progress, Not Started)
+      const from7 = shiftDaysISO(-7);
       const picNorm7 = String(pic || '').trim().toLowerCase();
       const recent = allTasks.filter(t => {
         if (String(t.pic || '').trim().toLowerCase() !== picNorm7) return false;
-        const sDate = String(t.start_date || '').trim();
-        const dDate = String(t.due_date || '').trim();
-        const st = String(t.status || '').trim().toLowerCase();
-        const isActiveOpen = (st !== 'completed' && st !== 'complete' && st !== 'cancelled' && st !== 'cancel');
-        return (sDate >= from7) || (dDate >= from7) || isActiveOpen;
+        const sDate = String(t.start_date || '').trim().slice(0, 10);
+        const dDate = String(t.due_date || '').trim().slice(0, 10);
+        const cDate = String(t.created_at || '').trim().slice(0, 10);
+        return (sDate && sDate >= from7) || (dDate && dDate >= from7) || (cDate && cDate >= from7);
+      }).sort((a, b) => {
+        const dA = String(a.start_date || '').slice(0, 10);
+        const dB = String(b.start_date || '').slice(0, 10);
+        if (dB !== dA) return dB.localeCompare(dA);
+        return Number(b.id) - Number(a.id);
       });
       document.getElementById('my7DaysBadge').textContent = `${recent.length} records`;
       const tbody = document.getElementById('my7DaysTableBody');
       if (!recent.length) {
         tbody.innerHTML = '<tr><td colspan="7" class="px-4 py-8 text-center text-slate-400">No tasks logged in the last 7 days.</td></tr>';
       } else {
-        tbody.innerHTML = recent.map(t => `
+        tbody.innerHTML = recent.map(t => {
+          const editable = canEditTaskRecord(t);
+          return `
           <tr class="hover:bg-slate-50/80">
             <td class="px-4 py-2.5 font-mono text-[11px] text-slate-500">${esc(t.start_date)}</td>
             <td class="px-4 py-2.5 font-mono text-[11px] text-slate-500">${esc(t.due_date)}</td>
@@ -2245,11 +2257,14 @@
             <td class="px-4 py-2.5">${getStatusBadge(t.status)}</td>
             <td class="px-4 py-2.5 font-mono font-semibold text-rose-600">${esc(calcOverdue(t.due_date, t.status))}</td>
             <td class="px-4 py-2.5 text-right whitespace-nowrap">
-              <button type="button" onclick="openEditDrawer(${t.id})" class="px-2.5 py-1 rounded border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-semibold transition mr-1 cursor-pointer">Edit</button>
-              <button type="button" onclick="quickDeleteTask(${t.id}, '${esc(t.task)}')" class="p-1 rounded text-slate-400 hover:text-rose-600 transition cursor-pointer"><i data-lucide="trash-2" class="w-3.5 h-3.5 inline"></i></button>
+              ${editable ? `
+                <button type="button" onclick="openEditDrawer(${t.id})" class="px-2.5 py-1 rounded border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-semibold transition mr-1 cursor-pointer">Edit</button>
+                <button type="button" onclick="quickDeleteTask(${t.id}, '${esc(t.task)}')" class="p-1 rounded text-slate-400 hover:text-rose-600 transition cursor-pointer"><i data-lucide="trash-2" class="w-3.5 h-3.5 inline"></i></button>
+              ` : `<span class="text-[11px] text-slate-400 italic">View only</span>`}
             </td>
           </tr>
-        `).join('');
+        `;
+        }).join('');
       }
       refreshIcons();
     }
@@ -3063,6 +3078,9 @@
     async function quickChangeStatus(taskId, newStatus, causeNote = null) {
       const task = allTasks.find(t => t.id === taskId);
       if (!task) return;
+      if (!canEditTaskRecord(task)) {
+        return showToast('Read-only: You can only update your own tasks.', true);
+      }
 
       const prevStatus = task.status;
       const prevCause = task.cause_of_delay || '';
@@ -3169,7 +3187,10 @@
     async function updateDueDateInline(taskId, newDue) {
       if (!newDue) return;
       const t = allTasks.find(x => x.id === taskId);
-      if (t) t.due_date = newDue;
+      if (!t || !canEditTaskRecord(t)) {
+        return showToast('Read-only: You can only update your own tasks.', true);
+      }
+      t.due_date = newDue;
       await sb.from('task_log').update({ due_date: newDue, overdue: calcOverdue(newDue, t ? t.status : 'Not Started') }).eq('id', taskId);
       showToast('Due date updated');
     }
@@ -3462,6 +3483,9 @@
     function openEditDrawer(id) {
       const t = allTasks.find(x => x.id === id);
       if (!t) return;
+      if (!canEditTaskRecord(t)) {
+        return showToast('Read-only: Members cannot edit another PIC's task.', true);
+      }
       document.getElementById('editTaskId').value = t.id;
       document.getElementById('drawerTaskIdLabel').textContent = `ID #${t.id} • ${t.pic}`;
       document.getElementById('editTaskName').value = t.task;
@@ -3564,7 +3588,7 @@
       }
 
       const editBtn = document.getElementById('btnInspEditAction');
-      if (t) {
+      if (t && canEditTaskRecord(t)) {
         editBtn.classList.remove('hidden');
         editBtn.onclick = () => {
           closeDetailInspector();
@@ -3572,6 +3596,7 @@
         };
       } else {
         editBtn.classList.add('hidden');
+        editBtn.onclick = null;
       }
 
       document.getElementById('detailInspectorModal').classList.remove('hidden');
@@ -3592,6 +3617,10 @@
       e.preventDefault();
       const id = Number(document.getElementById('editTaskId').value);
       const prevTask = allTasks.find(x => x.id === id);
+      if (!prevTask || !canEditTaskRecord(prevTask)) {
+        closeEditDrawer();
+        return showToast('Read-only: Members cannot edit another PIC's task.', true);
+      }
       const status = document.getElementById('editTaskStatus').value;
       if (prevTask && prevTask.status !== 'Completed' && status === 'Completed') {
         if (!confirm('Are you sure you want to mark this task as Completed? This status cannot be reverted once saved.')) return;
@@ -3679,6 +3708,9 @@
 
     async function quickDeleteTask(id, taskName) {
       const t = allTasks.find(x => x.id === id);
+      if (!t || !canEditTaskRecord(t)) {
+        return showToast('Read-only: Members cannot delete another PIC's task.', true);
+      }
       if (t) {
         await sb.from('deleted_tasks').insert([{
           pic: t.pic, task: t.task, category: t.category, status: t.status, deleted_by: currentUser.email
