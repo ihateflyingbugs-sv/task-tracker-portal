@@ -2150,17 +2150,9 @@
       onMgmtDefSelectChange();
       enhanceCustomSelects();
 
-      // Last 7 days table (includes tasks started in last 7 days OR active/open tasks due in last 7 days or later)
+      // Last 7 days table
       const from7 = shiftDaysISO(-6);
-      const picNorm7 = String(pic || '').trim().toLowerCase();
-      const recent = allTasks.filter(t => {
-        if (String(t.pic || '').trim().toLowerCase() !== picNorm7) return false;
-        const sDate = String(t.start_date || '').trim();
-        const dDate = String(t.due_date || '').trim();
-        const st = String(t.status || '').trim().toLowerCase();
-        const isActiveOpen = (st !== 'completed' && st !== 'complete' && st !== 'cancelled' && st !== 'cancel');
-        return (sDate >= from7) || (dDate >= from7) || isActiveOpen;
-      });
+      const recent = allTasks.filter(t => t.pic === pic && t.start_date >= from7);
       document.getElementById('my7DaysBadge').textContent = `${recent.length} records`;
       const tbody = document.getElementById('my7DaysTableBody');
       if (!recent.length) {
@@ -3139,4 +3131,435 @@
       const carryOver = document.getElementById('chkOvCarryOver').checked;
       const showCancelled = document.getElementById('chkOvShowCancelled').checked;
 
-      document.getElementBy
+      document.getElementById('ovPeriodLabel').textContent = (from === to) ? from : `${from} → ${to}`;
+
+      const isVoid = s => String(s || '').toLowerCase() === 'cancelled';
+      const isOpen = r => r.status !== 'Completed' && !isVoid(r.status);
+
+      const winAll = allTasks.filter(t => {
+        if (!t.start_date || t.start_date > to) return false;
+        const due = t.due_date || t.start_date;
+        if (due >= from) return true;
+        return carryOver && isOpen(t);
+      }).filter(t => showCancelled || !isVoid(t.status));
+
+      const win = winAll.filter(t => !isVoid(t.status));
+      const kpis = [
+        ['Total Window', win.length, false],
+        ['Completed', win.filter(r => r.status === 'Completed').length, false],
+        ['In Progress', win.filter(r => r.status === 'In progress').length, false],
+        ['Paused', win.filter(r => r.status === 'Paused').length, false],
+        ['Not Started', win.filter(r => r.status === 'Not Started').length, false],
+        ['Suspended', win.filter(r => r.status === 'Suspend').length, false],
+        ['Overdue', win.filter(r => calcOverdue(r.due_date, r.status) !== '').length, true]
+      ];
+      document.getElementById('ovKpiGrid').innerHTML = kpis.map(([l, v, red]) => `
+        <div class="p-3.5 rounded-xl bg-slate-50/70 border border-slate-200/80">
+          <div class="text-[10px] font-semibold uppercase tracking-wider text-slate-400">${l}</div>
+          <div class="font-mono text-2xl font-bold ${red && v > 0 ? 'text-rose-600' : 'text-slate-900'} mt-1">${v}</div>
+        </div>
+      `).join('');
+
+      const members = [...new Set(allAccess.map(a => String(a.member || '').trim()).filter(Boolean))].sort((a, b) => {
+        const rowsA = win.filter(t => t.pic === a);
+        const rowsB = win.filter(t => t.pic === b);
+        const compA = rowsA.filter(r => r.status === 'Completed').length;
+        const compB = rowsB.filter(r => r.status === 'Completed').length;
+        const pctA = rowsA.length > 0 ? (compA / rowsA.length) : -1;
+        const pctB = rowsB.length > 0 ? (compB / rowsB.length) : -1;
+        if (pctB !== pctA) return pctB - pctA;
+        if (compB !== compA) return compB - compA;
+        return a.localeCompare(b);
+      });
+      const rowHtml = (m, rows, isTotal = false) => {
+        const routine = rows.filter(r => (r.category || 'Routine') === 'Routine').length;
+        const onDemand = rows.filter(r => r.category !== 'Routine').length;
+        const comp = rows.filter(r => r.status === 'Completed').length;
+        const prog = rows.filter(r => r.status === 'In progress').length;
+        const paus = rows.filter(r => r.status === 'Paused').length;
+        const notS = rows.filter(r => r.status === 'Not Started').length;
+        const susp = rows.filter(r => r.status === 'Suspend').length;
+        const over = rows.filter(r => calcOverdue(r.due_date, r.status) !== '').length;
+        const pct = rows.length > 0 ? Math.round((comp / rows.length) * 100) : 0;
+        const avatarHtml = isTotal
+          ? `<span class="w-7 h-7 rounded-lg bg-[#0A0A0B] text-white text-[11px] font-bold flex items-center justify-center shrink-0">Σ</span>`
+          : `<span class="w-7 h-7 rounded-lg bg-slate-100 border border-slate-200 text-slate-700 text-[11px] font-bold flex items-center justify-center shrink-0">${esc(m.charAt(0))}</span>`;
+        return `
+          <tr class="${isTotal ? 'bg-slate-100/90 font-bold text-slate-900 border-t-2 border-slate-300' : 'hover:bg-blue-50/30 transition'}">
+            <td class="px-5 py-3">
+              <div class="flex items-center gap-2.5">
+                ${avatarHtml}
+                <span class="font-semibold text-slate-900">${esc(m)}</span>
+              </div>
+            </td>
+            <td class="px-3 py-3 text-center font-mono text-slate-600">${routine}</td>
+            <td class="px-3 py-3 text-center font-mono text-slate-600">${onDemand}</td>
+            <td class="px-3 py-3 text-center"><span class="px-2 py-0.5 rounded-md bg-slate-100 font-mono font-bold text-slate-900">${rows.length}</span></td>
+            <td class="px-3 py-3 text-center"><span class="px-2 py-0.5 rounded-md ${comp > 0 ? 'bg-emerald-50 text-emerald-700 font-bold' : 'text-slate-400'} font-mono">${comp}</span></td>
+            <td class="px-3 py-3 text-center"><span class="px-2 py-0.5 rounded-md ${prog > 0 ? 'bg-amber-50 text-amber-800 font-bold' : 'text-slate-400'} font-mono">${prog}</span></td>
+            <td class="px-3 py-3 text-center font-mono ${paus > 0 ? 'text-indigo-700 font-semibold' : 'text-slate-400'}">${paus}</td>
+            <td class="px-3 py-3 text-center font-mono text-slate-500">${notS}</td>
+            <td class="px-3 py-3 text-center font-mono ${susp > 0 ? 'text-orange-700 font-semibold' : 'text-slate-400'}">${susp}</td>
+            <td class="px-3 py-3 text-center"><span class="px-2 py-0.5 rounded-md ${over > 0 ? 'bg-rose-50 text-rose-700 font-bold' : 'text-slate-300'} font-mono">${over}</span></td>
+            <td class="px-5 py-3">
+              <div class="flex items-center gap-2">
+                <div class="flex-1 h-2 rounded-full bg-slate-100 overflow-hidden border border-slate-200/70">
+                  <div class="h-full rounded-full ${pct >= 80 ? 'bg-[#10B981]' : (pct >= 40 ? 'bg-[#1A64FF]' : 'bg-slate-400')}" style="width: ${pct}%"></div>
+                </div>
+                <span class="font-mono text-[11px] font-semibold text-slate-700 w-9 text-right">${pct}%</span>
+              </div>
+            </td>
+          </tr>
+        `;
+      };
+
+      document.getElementById('overviewTableBody').innerHTML =
+        members.map(m => rowHtml(m, win.filter(t => t.pic === m))).join('') +
+        rowHtml('Total', win, true);
+
+      document.getElementById('ovPeriodTasksBody').innerHTML = winAll.map(r => {
+        const origin = r.start_date < from ? 'Carried over' : 'In period';
+        return `
+          <tr onclick="openEditDrawer(${r.id})" class="hover:bg-slate-50/80 cursor-pointer">
+            <td class="px-4 py-2.5 font-semibold text-slate-800">${esc(r.pic)}</td>
+            <td class="px-4 py-2.5 font-mono text-[11px] text-slate-500">${esc(r.start_date)}</td>
+            <td class="px-4 py-2.5 font-mono text-[11px] text-slate-500">${esc(r.due_date)}</td>
+            <td class="px-4 py-2.5 text-[11px] font-medium ${origin === 'Carried over' ? 'text-[#1A64FF]' : 'text-slate-400'}">${origin}</td>
+            <td class="px-4 py-2.5 text-slate-600">${esc(r.category)}</td>
+            <td class="px-4 py-2.5 font-semibold text-slate-900">${esc(r.task)}</td>
+            <td class="px-4 py-2.5">${getStatusBadge(r.status)}</td>
+            <td class="px-4 py-2.5 font-mono font-semibold text-rose-600">${esc(calcOverdue(r.due_date, r.status))}</td>
+            <td class="px-4 py-2.5 text-slate-500 italic">${esc(r.cause_of_delay || '-')}</td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    // ==================== 6. HISTORY & 3 CSV EXPORTS ====================
+    function clearHistDates() {
+      document.getElementById('histFromDate').value = '';
+      document.getElementById('histToDate').value = '';
+      renderHistoryView();
+    }
+
+    function clearHistColFilters() {
+      document.getElementById('histMemberFilter').value = 'ALL';
+      document.getElementById('histCauseFilter').value = '';
+      document.getElementById('histCatFilter').value = 'ALL';
+      document.getElementById('histSearchInput').value = '';
+      document.getElementById('histStatusFilter').value = 'ALL';
+      renderHistoryView();
+    }
+
+    function getFilteredHistoryRows() {
+      const from = document.getElementById('histFromDate').value;
+      const to = document.getElementById('histToDate').value;
+      const mFilter = document.getElementById('histMemberFilter').value;
+      const cFilter = document.getElementById('histCauseFilter').value.trim().toLowerCase();
+      const catFilter = document.getElementById('histCatFilter').value;
+      const q = document.getElementById('histSearchInput').value.trim().toLowerCase();
+      const sFilter = document.getElementById('histStatusFilter').value;
+
+      const durMap = {};
+      allRealtimeLogs.forEach(r => {
+        if (r.duration && r.duration !== '-') {
+          durMap[`${String(r.pic).trim().toLowerCase()}||${String(r.task).trim().toLowerCase()}`] = r.duration;
+        }
+      });
+
+      return allTasks.filter(t => {
+        if (from && t.start_date < from) return false;
+        if (to && t.start_date > to) return false;
+        if (mFilter !== 'ALL' && t.pic !== mFilter) return false;
+        if (cFilter && !String(t.cause_of_delay || '').toLowerCase().includes(cFilter)) return false;
+        if (catFilter !== 'ALL' && t.category !== catFilter) return false;
+        if (sFilter !== 'ALL' && t.status !== sFilter) return false;
+        if (q && !(`${t.task} ${t.task_details}`).toLowerCase().includes(q)) return false;
+        return true;
+      }).map(t => {
+        const k = `${String(t.pic).trim().toLowerCase()}||${String(t.task).trim().toLowerCase()}`;
+        return Object.assign({}, t, {
+          overdue_calc: calcOverdue(t.due_date, t.status),
+          duration_calc: durMap[k] || '-'
+        });
+      });
+    }
+
+    function renderHistoryView() {
+      const filtered = getFilteredHistoryRows();
+      document.getElementById('histCountLabel').textContent = `${filtered.length} records`;
+      document.getElementById('histFooterStats').textContent = `Showing ${Math.min(250, filtered.length)} of ${filtered.length} records`;
+
+      document.getElementById('historyTableBody').innerHTML = filtered.slice(0, 250).map(t => `
+        <tr onclick="openEditDrawer(${t.id})" class="hover:bg-slate-50/80 cursor-pointer">
+          <td class="px-3.5 py-2.5 font-semibold text-slate-800 whitespace-nowrap">${esc(t.pic)}</td>
+          <td class="px-3.5 py-2.5 font-mono text-[11px] text-slate-500">${esc(t.start_date)}</td>
+          <td class="px-3.5 py-2.5 font-mono text-[11px] text-slate-500">${esc(t.due_date)}</td>
+          <td class="px-3.5 py-2.5 font-mono font-semibold text-rose-600">${esc(t.overdue_calc)}</td>
+          <td class="px-3.5 py-2.5 text-slate-500 italic max-w-[140px] truncate">${esc(t.cause_of_delay || '-')}</td>
+          <td class="px-3.5 py-2.5 text-slate-600">${esc(t.category)}</td>
+          <td class="px-3.5 py-2.5 font-semibold text-slate-900">${esc(t.task)}</td>
+          <td class="px-3.5 py-2.5 text-slate-500 max-w-xs truncate">${esc(t.task_details || '-')}</td>
+          <td class="px-3.5 py-2.5">${getStatusBadge(t.status)}</td>
+          <td class="px-3.5 py-2.5 font-mono font-semibold text-slate-700">${esc(t.duration_calc)}</td>
+        </tr>
+      `).join('');
+    }
+
+    function downloadCSVFile(rows, filename) {
+      if (!rows || !rows.length) return showToast('No records available to export.', true);
+      const headers = ['PIC', 'Start Date', 'Due Date', 'Overdue', 'Cause of Delay', 'Category', 'Task', 'Task Details', 'Status', 'Duration', 'Link 1', 'Link 2', 'Link 3'];
+      const csvRows = rows.map(t => [
+        t.pic, t.start_date, t.due_date, calcOverdue(t.due_date, t.status), t.cause_of_delay || '',
+        t.category, t.task, t.task_details || '', t.status, t.duration_calc || '-',
+        t.link_1 || '', t.link_2 || '', t.link_3 || ''
+      ]);
+      const csv = '\ufeff' + [headers, ...csvRows].map(r => r.map(v => `"${String(v == null ? '' : v).replace(/"/g, '""')}"`).join(',')).join('\r\n');
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = filename;
+      link.click();
+      showToast(`Exported ${filename}`);
+    }
+
+    function exportTodayCSV() {
+      const today = todayISO();
+      downloadCSVFile(allTasks.filter(t => t.start_date === today), `Task_History_Today_${today}.csv`);
+    }
+
+    function exportFilteredCSV() {
+      downloadCSVFile(getFilteredHistoryRows(), `Task_History_Filtered_${todayISO()}.csv`);
+    }
+
+    function exportFullHistoryCSV() {
+      downloadCSVFile(allTasks, `Task_History_Full_${todayISO()}.csv`);
+    }
+
+    // ==================== SLIDE-OVER DRAWER ====================
+    function openEditDrawer(id) {
+      const t = allTasks.find(x => x.id === id);
+      if (!t) return;
+      document.getElementById('editTaskId').value = t.id;
+      document.getElementById('drawerTaskIdLabel').textContent = `ID #${t.id} • ${t.pic}`;
+      document.getElementById('editTaskName').value = t.task;
+      document.getElementById('editTaskCategory').value = t.category || 'Routine';
+      document.getElementById('editTaskStatus').value = t.status;
+      document.getElementById('editTaskArea').value = t.area || 'Operations';
+      document.getElementById('editTaskStart').value = t.start_date;
+      document.getElementById('editTaskDue').value = t.due_date;
+      document.getElementById('editTaskDetails').value = t.task_details || '';
+      document.getElementById('editTaskCause').value = t.cause_of_delay || '';
+      document.getElementById('editTaskLink1').value = t.link_1 || '';
+      document.getElementById('editTaskLink2').value = t.link_2 || '';
+      document.getElementById('editTaskLink3').value = t.link_3 || '';
+
+      document.getElementById('editDrawerBackdrop').classList.remove('hidden');
+      document.getElementById('editDrawer').classList.remove('drawer-enter');
+      document.getElementById('editDrawer').classList.add('drawer-open');
+      enhanceCustomSelects();
+      refreshIcons();
+    }
+
+    function openEditDrawerByTaskName(pic, taskName) {
+      const t = allTasks.find(x => x.pic === pic && x.task === taskName);
+      if (t) openEditDrawer(t.id);
+    }
+
+
+    function toggleDesktopSidebar() {
+      const sbEl = document.getElementById('appSidebar');
+      const iconEl = document.getElementById('desktopSidebarIcon');
+      if (!sbEl) return;
+      const isCollapsed = sbEl.classList.toggle('sidebar-collapsed');
+      if (iconEl) {
+        iconEl.setAttribute('data-lucide', isCollapsed ? 'panel-left-open' : 'panel-left-close');
+      }
+      refreshIcons();
+    }
+
+    function toggleMobileSidebar(open) {
+      const sbEl = document.getElementById('appSidebar');
+      const bdEl = document.getElementById('mobileSidebarBackdrop');
+      if (open) {
+        sbEl.classList.remove('-translate-x-full');
+        bdEl.classList.remove('hidden');
+      } else {
+        sbEl.classList.add('-translate-x-full');
+        bdEl.classList.add('hidden');
+      }
+    }
+
+    function openDetailInspectorById(taskId, statusOverride, startOverride) {
+      const t = allTasks.find(x => x.id === Number(taskId));
+      if (!t) return;
+      const today = todayISO();
+      const rt = allRealtimeLogs.find(x => (x.log_date === today || x.action === 'Suspend') && String(x.pic).trim().toLowerCase() === String(t.pic).trim().toLowerCase() && String(x.task).trim().toLowerCase() === String(t.task).trim().toLowerCase());
+      const pic = t.pic;
+      const taskName = t.task;
+
+      const title = t ? t.task : taskName;
+      const cat = t ? t.category : (rt ? rt.category : 'Routine');
+      const area = t ? t.area : (rt ? rt.area : 'Operations');
+      const status = statusOverride || (t ? t.status : 'Not Started');
+      const start = startOverride || (rt ? rt.start_time : '-');
+      const details = (t && t.task_details) ? t.task_details : (rt && rt.task_details ? rt.task_details : 'No additional details provided.');
+      const cause = (t && t.cause_of_delay) ? t.cause_of_delay : (rt && rt.cause ? rt.cause : 'No cause or delay notes recorded.');
+      const defMatch = allDefinitions.find(d =>
+        String(d.member || '').trim().toLowerCase() === String(pic || '').trim().toLowerCase() &&
+        String(d.task || '').trim().toLowerCase() === String(title || '').trim().toLowerCase()
+      ) || allDefinitions.find(d => String(d.task || '').trim().toLowerCase() === String(title || '').trim().toLowerCase());
+      const criteriaText = (defMatch && defMatch.done_when && String(defMatch.done_when).trim())
+        ? String(defMatch.done_when).trim()
+        : 'Pending completion criteria in Task Definitions.';
+
+      document.getElementById('inspCategoryTag').textContent = cat;
+      document.getElementById('inspTaskTitle').textContent = title;
+      document.getElementById('inspMember').textContent = pic;
+      document.getElementById('inspArea').textContent = area;
+      document.getElementById('inspStatus').innerHTML = getStatusBadge(status);
+      document.getElementById('inspStartTime').textContent = start;
+      const critEl = document.getElementById('inspCriteriaBox');
+      if (critEl) {
+        critEl.textContent = criteriaText;
+        critEl.className = (defMatch && defMatch.done_when && String(defMatch.done_when).trim())
+          ? 'text-[13.5px] font-medium text-slate-800 leading-relaxed'
+          : 'text-[13px] italic text-slate-500 leading-relaxed';
+      }
+      document.getElementById('inspDetailsBox').textContent = details;
+      document.getElementById('inspCauseBox').textContent = cause;
+
+      const linksBox = document.getElementById('inspLinksContainer');
+      const rawLinks = t ? [t.link_1, t.link_2, t.link_3] : (rt ? [rt.link_1, rt.link_2, rt.link_3] : []);
+      const validLinks = rawLinks.filter(u => u && /^https?:\/\//i.test(String(u).trim()));
+      if (validLinks.length) {
+        linksBox.innerHTML = validLinks.map((u, idx) =>
+          `<a href="${esc(u.trim())}" target="_blank" rel="noopener" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-50 hover:bg-blue-600 text-blue-700 hover:text-white border border-blue-200 text-xs font-semibold transition"><i data-lucide="external-link" class="w-3.5 h-3.5"></i> Link ${idx + 1}</a>`
+        ).join('');
+      } else {
+        linksBox.innerHTML = '<span class="text-slate-400 italic">No reference links attached.</span>';
+      }
+
+      const editBtn = document.getElementById('btnInspEditAction');
+      if (t) {
+        editBtn.classList.remove('hidden');
+        editBtn.onclick = () => {
+          closeDetailInspector();
+          openEditDrawer(t.id);
+        };
+      } else {
+        editBtn.classList.add('hidden');
+      }
+
+      document.getElementById('detailInspectorModal').classList.remove('hidden');
+      refreshIcons();
+    }
+
+    function closeDetailInspector() {
+      document.getElementById('detailInspectorModal').classList.add('hidden');
+    }
+
+    function closeEditDrawer() {
+      document.getElementById('editDrawerBackdrop').classList.add('hidden');
+      document.getElementById('editDrawer').classList.remove('drawer-open');
+      document.getElementById('editDrawer').classList.add('drawer-enter');
+    }
+
+    async function saveDrawerChanges(e) {
+      e.preventDefault();
+      const id = Number(document.getElementById('editTaskId').value);
+      const prevTask = allTasks.find(x => x.id === id);
+      const status = document.getElementById('editTaskStatus').value;
+      if (prevTask && prevTask.status !== 'Completed' && status === 'Completed') {
+        if (!confirm('Are you sure you want to mark this task as Completed? This status cannot be reverted once saved.')) return;
+      }
+      const due = document.getElementById('editTaskDue').value;
+      const updates = {
+        task: document.getElementById('editTaskName').value.trim(),
+        category: document.getElementById('editTaskCategory').value,
+        status: status,
+        area: document.getElementById('editTaskArea').value,
+        start_date: document.getElementById('editTaskStart').value,
+        due_date: due,
+        overdue: calcOverdue(due, status),
+        task_details: document.getElementById('editTaskDetails').value.trim(),
+        cause_of_delay: document.getElementById('editTaskCause').value.trim(),
+        link_1: document.getElementById('editTaskLink1').value.trim(),
+        link_2: document.getElementById('editTaskLink2').value.trim(),
+        link_3: document.getElementById('editTaskLink3').value.trim()
+      };
+
+      pendingStatusLocks[id] = { status: status, cause: updates.cause_of_delay, expiresAt: Date.now() + 6000 };
+      activeWrites++;
+      try {
+        const { error } = await sb.from('task_log').update(updates).eq('id', id);
+        if (error) {
+          delete pendingStatusLocks[id];
+          return showToast('Error updating record: ' + error.message, true);
+        }
+
+        if (prevTask) {
+          const today = todayISO();
+          const picNorm = String(prevTask.pic || '').trim().toLowerCase();
+          const taskNorm = String(prevTask.task || '').trim().toLowerCase();
+          const existingTodayLog = allRealtimeLogs.find(l =>
+            l.log_date === today &&
+            String(l.pic || '').trim().toLowerCase() === picNorm &&
+            String(l.task || '').trim().toLowerCase() === taskNorm
+          );
+          const rtUpdates = {
+            task: updates.task,
+            category: updates.category,
+            action: status,
+            task_details: updates.task_details,
+            area: updates.area,
+            cause: updates.cause_of_delay,
+            link_1: updates.link_1,
+            link_2: updates.link_2,
+            link_3: updates.link_3,
+            updated_at: new Date().toISOString()
+          };
+          if (existingTodayLog) {
+            await sb.from('realtime_log').update(rtUpdates).eq('id', existingTodayLog.id);
+          } else {
+            await sb.from('realtime_log').insert([Object.assign({
+              pic: prevTask.pic,
+              start_time: status === 'Not Started' ? '-' : timeNowStr(),
+              end_time: (status === 'Completed' || status === 'Paused') ? timeNowStr() : '-',
+              duration: '-',
+              log_date: today
+            }, rtUpdates)]);
+          }
+        }
+      } finally {
+        activeWrites = Math.max(0, activeWrites - 1);
+      }
+
+      closeEditDrawer();
+      showToast('Task & status synchronized across all views');
+      await syncAllData(false);
+    }
+
+    async function deleteCurrentTask() {
+      const id = Number(document.getElementById('editTaskId').value);
+      const t = allTasks.find(x => x.id === id);
+      if (!t || !confirm(`Delete "${t.task}"?`)) return;
+      await quickDeleteTask(id, t.task);
+      closeEditDrawer();
+    }
+
+    async function quickDeleteTask(id, taskName) {
+      const t = allTasks.find(x => x.id === id);
+      if (t) {
+        await sb.from('deleted_tasks').insert([{
+          pic: t.pic, task: t.task, category: t.category, status: t.status, deleted_by: currentUser.email
+        }]);
+        await sb.from('realtime_log').delete().ilike('pic', t.pic).ilike('task', t.task);
+      }
+      await sb.from('task_log').delete().eq('id', id);
+      showToast(`Deleted: ${taskName}`);
+      await syncAllData(false);
+    }
+  </script>
+</body>
+</html>
