@@ -844,9 +844,14 @@
                   </select>
                 </div>
               </div>
-              <div class="relative w-full sm:w-60">
-                <i data-lucide="search" class="w-3.5 h-3.5 text-slate-400 absolute left-3 top-2.5"></i>
-                <input type="text" id="rtSearchInput" oninput="renderRealtimeView()" placeholder="Search tasks..." class="exec-input w-full pl-8 pr-3 py-1.5">
+              <div class="flex items-center gap-2 w-full sm:w-auto">
+                <div class="relative flex-1 sm:w-56">
+                  <i data-lucide="search" class="w-3.5 h-3.5 text-slate-400 absolute left-3 top-2.5"></i>
+                  <input type="text" id="rtSearchInput" oninput="renderRealtimeView()" placeholder="Search tasks..." class="exec-input w-full pl-8 pr-3 py-1.5">
+                </div>
+                <button type="button" onclick="resetRealtimeFilters(true)" title="Clear all filters" class="px-3 py-1.5 rounded-lg border border-slate-200 bg-slate-50 hover:bg-slate-100 text-slate-600 hover:text-slate-900 text-xs font-semibold transition shrink-0 cursor-pointer">
+                  Reset
+                </button>
               </div>
             </div>
           </div>
@@ -1752,9 +1757,23 @@
       return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
     }
 
+    function makeTaskIdentityKey(pic, task, details) {
+      return `${String(pic || '').trim().toLowerCase()}||${String(task || '').trim().toLowerCase()}||${String(details || '').trim().toLowerCase()}`;
+    }
+
     function timeNowStr() {
       const d = new Date();
       return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0') + ':' + String(d.getSeconds()).padStart(2, '0');
+    }
+
+    function formatDurationHMS(totalSeconds) {
+      const secsTotal = Math.max(1, Math.round(totalSeconds));
+      const hrs = Math.floor(secsTotal / 3600);
+      const mins = Math.floor((secsTotal % 3600) / 60);
+      const secs = secsTotal % 60;
+      if (hrs > 0) return `${hrs}h ${mins}m ${secs}s`;
+      if (mins > 0) return `${mins}m ${secs}s`;
+      return `${secs}s`;
     }
 
     function calcOverdue(dueStr, status) {
@@ -1960,8 +1979,45 @@
       history: 'Central Task Archive'
     };
 
-    function switchTab(tab) {
+    function resetRealtimeFilters(shouldRender = false) {
+      const mEl = document.getElementById('rtFilterMember');
+      const aEl = document.getElementById('rtFilterArea');
+      const sEl = document.getElementById('rtFilterStatus');
+      const qEl = document.getElementById('rtSearchInput');
+      const scopeBtn = document.getElementById('btnToggleRtScope');
+      if (mEl) { mEl.value = 'ALL'; syncCustomSelectUI('rtFilterMember'); }
+      if (aEl) { aEl.value = 'ALL'; syncCustomSelectUI('rtFilterArea'); }
+      if (sEl) { sEl.value = 'ALL'; syncCustomSelectUI('rtFilterStatus'); }
+      if (qEl) { qEl.value = ''; }
+      rtScopeAllTeam = true;
+      if (scopeBtn) { scopeBtn.textContent = 'Scope: All Team'; }
+      if (shouldRender) renderRealtimeView();
+    }
+
+    function resetAllViewFilters() {
+      resetRealtimeFilters(false);
+      const defPic = document.getElementById('defPicFilter');
+      const defQ = document.getElementById('defSearchInput');
+      if (defPic) { defPic.value = 'ALL'; syncCustomSelectUI('defPicFilter'); }
+      if (defQ) { defQ.value = ''; }
+
+      const hMem = document.getElementById('histMemberFilter');
+      const hCause = document.getElementById('histCauseFilter');
+      const hCat = document.getElementById('histCatFilter');
+      const hSearch = document.getElementById('histSearchInput');
+      const hStat = document.getElementById('histStatusFilter');
+      if (hMem) { hMem.value = 'ALL'; syncCustomSelectUI('histMemberFilter'); }
+      if (hCause) { hCause.value = ''; }
+      if (hCat) { hCat.value = 'ALL'; syncCustomSelectUI('histCatFilter'); }
+      if (hSearch) { hSearch.value = ''; }
+      if (hStat) { hStat.value = 'ALL'; syncCustomSelectUI('histStatusFilter'); }
+    }
+
+    function switchTab(tab, keepFilters = false) {
       if ((tab === 'team' || tab === 'history') && !currentUser.isSupervisor) return;
+      if (!keepFilters) {
+        resetAllViewFilters();
+      }
       document.querySelectorAll('.view-section').forEach(el => el.classList.add('hidden'));
       document.querySelectorAll('.nav-link').forEach(btn => {
         btn.classList.remove('text-white', 'bg-white/10');
@@ -1975,13 +2031,22 @@
         navBtn.style.borderLeftColor = navBtn.dataset.accent || '#1A64FF';
       }
       document.getElementById('pageTitle').textContent = tabTitles[tab] || 'Operations Portal';
+      if (tab === 'realtime') renderRealtimeView();
+      else if (tab === 'guide') renderDefinitionsTable();
+      else if (tab === 'history' && currentUser.isSupervisor) renderHistoryView();
+      else if (tab === 'team' && currentUser.isSupervisor) renderOverviewView();
       toggleMobileSidebar(false);
       refreshIcons();
     }
 
     function jumpToArea(area) {
-      switchTab('realtime');
-      document.getElementById('rtFilterArea').value = area;
+      resetAllViewFilters();
+      switchTab('realtime', true);
+      const aEl = document.getElementById('rtFilterArea');
+      if (aEl) {
+        aEl.value = area;
+        syncCustomSelectUI('rtFilterArea');
+      }
       renderRealtimeView();
     }
 
@@ -2005,7 +2070,7 @@
       const rtTodayMap = {};
       allRealtimeLogs.forEach(r => {
         if (r.log_date === today) {
-          const k = `${String(r.pic).trim().toLowerCase()}||${String(r.task).trim().toLowerCase()}`;
+          const k = makeTaskIdentityKey(r.pic, r.task, r.task_details);
           if (!rtTodayMap[k]) {
             rtTodayMap[k] = String(r.action || '').toLowerCase();
           }
@@ -2026,7 +2091,7 @@
         const open = allTasks.filter(t => t.pic === m && t.status !== 'Completed' && t.status !== 'Cancelled');
         let count = 0;
         open.forEach(t => {
-          const k = `${m.toLowerCase()}||${String(t.task).trim().toLowerCase()}`;
+          const k = makeTaskIdentityKey(m, t.task, t.task_details);
           const eff = rtTodayMap[k] || String(t.status || '').toLowerCase();
           if (eff === 'in progress' || eff === 'start') count++;
         });
@@ -2051,9 +2116,14 @@
     }
 
     function filterRealtimeMember(memberName) {
-      switchTab('realtime');
+      resetAllViewFilters();
+      switchTab('realtime', true);
       if (currentUser.isSupervisor) {
-        document.getElementById('rtFilterMember').value = memberName;
+        const mEl = document.getElementById('rtFilterMember');
+        if (mEl) {
+          mEl.value = memberName;
+          syncCustomSelectUI('rtFilterMember');
+        }
       }
       renderRealtimeView();
     }
@@ -2150,9 +2220,17 @@
       onMgmtDefSelectChange();
       enhanceCustomSelects();
 
-      // Last 7 days table
+      // Last 7 days table (includes tasks started in last 7 days OR active/open tasks due in last 7 days or later)
       const from7 = shiftDaysISO(-6);
-      const recent = allTasks.filter(t => t.pic === pic && t.start_date >= from7);
+      const picNorm7 = String(pic || '').trim().toLowerCase();
+      const recent = allTasks.filter(t => {
+        if (String(t.pic || '').trim().toLowerCase() !== picNorm7) return false;
+        const sDate = String(t.start_date || '').trim();
+        const dDate = String(t.due_date || '').trim();
+        const st = String(t.status || '').trim().toLowerCase();
+        const isActiveOpen = (st !== 'completed' && st !== 'complete' && st !== 'cancelled' && st !== 'cancel');
+        return (sDate >= from7) || (dDate >= from7) || isActiveOpen;
+      });
       document.getElementById('my7DaysBadge').textContent = `${recent.length} records`;
       const tbody = document.getElementById('my7DaysTableBody');
       if (!recent.length) {
@@ -2655,10 +2733,10 @@
         return true;
       }).sort((a, b) => Number(a.id) - Number(b.id));
 
-      // Build lookup of latest valid start_time per (pic + task) across realtime_log
+      // Build lookup of latest valid start_time per (pic + task + task_details) across realtime_log
       const latestRtByKey = {};
       allRealtimeLogs.forEach(l => {
-        const k = `${String(l.pic).trim().toLowerCase()}||${String(l.task).trim().toLowerCase()}`;
+        const k = makeTaskIdentityKey(l.pic, l.task, l.task_details);
         if (!latestRtByKey[k]) {
           latestRtByKey[k] = l;
         } else if ((!latestRtByKey[k].start_time || latestRtByKey[k].start_time === '-') && l.start_time && l.start_time !== '-') {
@@ -2682,7 +2760,7 @@
         const isTodayRecord = (t.start_date === today);
         if (!isOpenOrNotStarted && !isTodayRecord) return;
 
-        const k = `${String(t.pic).trim().toLowerCase()}||${String(t.task).trim().toLowerCase()}`;
+        const k = makeTaskIdentityKey(t.pic, t.task, t.task_details);
         const rtMatch = latestRtByKey[k];
 
         // Show Start Timestamp for ALL statuses EXCEPT Not Started
@@ -2713,15 +2791,25 @@
         });
       });
 
-      // Sort: 1) All non-"Not Started" tasks first, ordered from MOST RECENT to oldest (latest updated_at / start_time / id desc)
-      //       2) All "Not Started" tasks at the VERY END, also ordered from MOST RECENT to oldest (id desc)
+      // Helper to convert HH:MM:SS string into numeric seconds for exact chronological ordering
+      const parseTimeSeconds = (tStr) => {
+        if (!tStr || tStr === '-') return -1;
+        const m = String(tStr).trim().match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?$/);
+        if (!m) return -1;
+        return (Number(m[1]) * 3600) + (Number(m[2]) * 60) + Number(m[3] || 0);
+      };
+
+      // Sort: 1) All non-"Not Started" tasks first, ordered strictly by START TIME descending (most recent hour first)
+      //       2) All "Not Started" tasks at the VERY END, ordered from most recent to oldest (id desc)
       timelineRows.sort((a, b) => {
         const aNotStarted = String(a.action).toLowerCase() === 'not started';
         const bNotStarted = String(b.action).toLowerCase() === 'not started';
         if (aNotStarted !== bNotStarted) return aNotStarted ? 1 : -1;
-        const tsA = a.sort_ts || 0;
-        const tsB = b.sort_ts || 0;
-        if (tsB !== tsA) return tsB - tsA;
+        if (!aNotStarted && !bNotStarted) {
+          const secA = parseTimeSeconds(a.start_time);
+          const secB = parseTimeSeconds(b.start_time);
+          if (secB !== secA) return secB - secA;
+        }
         return Number(b.id) - Number(a.id);
       });
 
@@ -3002,12 +3090,10 @@
           return showToast('Error saving status: ' + taskErr.message, true);
         }
 
-        const picNorm = String(task.pic || '').trim().toLowerCase();
-        const taskNorm = String(task.task || '').trim().toLowerCase();
+        const targetIdentity = makeTaskIdentityKey(task.pic, task.task, task.task_details);
         const existingTodayLog = allRealtimeLogs.find(l =>
           l.log_date === today &&
-          String(l.pic || '').trim().toLowerCase() === picNorm &&
-          String(l.task || '').trim().toLowerCase() === taskNorm
+          makeTaskIdentityKey(l.pic, l.task, l.task_details) === targetIdentity
         );
 
         if (existingTodayLog) {
@@ -3015,8 +3101,8 @@
           if ((newStatus === 'Completed' || newStatus === 'Paused') && existingTodayLog.start_time && existingTodayLog.start_time !== '-') {
             const startMs = new Date(`${today}T${existingTodayLog.start_time}`).getTime();
             if (!isNaN(startMs)) {
-              const mins = Math.max(1, Math.round((Date.now() - startMs) / 60000));
-              duration = mins < 60 ? `${mins}m` : `${Math.floor(mins/60)}h ${mins%60}m`;
+              const elapsedSecs = Math.max(1, Math.round((Date.now() - startMs) / 1000));
+              duration = formatDurationHMS(elapsedSecs);
             }
           }
           const preservedStart = (existingTodayLog.start_time && existingTodayLog.start_time !== '-') ? existingTodayLog.start_time : timeStr;
@@ -3031,6 +3117,15 @@
           Object.assign(existingTodayLog, rtPayload);
           await sb.from('realtime_log').update(rtPayload).eq('id', existingTodayLog.id);
         } else {
+          let initialDuration = '-';
+          if (newStatus === 'Completed') {
+            const createdMs = task.created_at ? new Date(task.created_at).getTime() : NaN;
+            if (!isNaN(createdMs)) {
+              initialDuration = formatDurationHMS(Math.max(1, Math.round((Date.now() - createdMs) / 1000)));
+            } else {
+              initialDuration = '1s';
+            }
+          }
           const newRtRow = {
             pic: task.pic,
             task: task.task,
@@ -3039,7 +3134,7 @@
             action: newStatus,
             start_time: timeStr,
             end_time: (newStatus === 'Completed' || newStatus === 'Paused') ? timeStr : '-',
-            duration: newStatus === 'Completed' ? '1m' : '-',
+            duration: initialDuration,
             log_date: today,
             cause: updatedCause,
             area: task.area
@@ -3248,6 +3343,7 @@
       document.getElementById('histCatFilter').value = 'ALL';
       document.getElementById('histSearchInput').value = '';
       document.getElementById('histStatusFilter').value = 'ALL';
+      ['histMemberFilter', 'histCatFilter', 'histStatusFilter'].forEach(syncCustomSelectUI);
       renderHistoryView();
     }
 
@@ -3260,10 +3356,14 @@
       const q = document.getElementById('histSearchInput').value.trim().toLowerCase();
       const sFilter = document.getElementById('histStatusFilter').value;
 
-      const durMap = {};
+      const durByDateMap = {};
+      const durFallbackMap = {};
       allRealtimeLogs.forEach(r => {
         if (r.duration && r.duration !== '-') {
-          durMap[`${String(r.pic).trim().toLowerCase()}||${String(r.task).trim().toLowerCase()}`] = r.duration;
+          const baseKey = makeTaskIdentityKey(r.pic, r.task, r.task_details);
+          const dateKey = `${baseKey}||${String(r.log_date || '').trim()}`;
+          if (!durByDateMap[dateKey]) durByDateMap[dateKey] = r.duration;
+          if (!durFallbackMap[baseKey]) durFallbackMap[baseKey] = r.duration;
         }
       });
 
@@ -3277,10 +3377,15 @@
         if (q && !(`${t.task} ${t.task_details}`).toLowerCase().includes(q)) return false;
         return true;
       }).map(t => {
-        const k = `${String(t.pic).trim().toLowerCase()}||${String(t.task).trim().toLowerCase()}`;
+        const stLower = String(t.status || '').trim().toLowerCase();
+        const baseKey = makeTaskIdentityKey(t.pic, t.task, t.task_details);
+        const dateKey = `${baseKey}||${String(t.start_date || '').trim()}`;
+        const resolvedDur = (stLower === 'not started')
+          ? '-'
+          : (durByDateMap[dateKey] || durFallbackMap[baseKey] || '-');
         return Object.assign({}, t, {
           overdue_calc: calcOverdue(t.due_date, t.status),
-          duration_calc: durMap[k] || '-'
+          duration_calc: resolvedDur
         });
       });
     }
@@ -3394,7 +3499,8 @@
       const t = allTasks.find(x => x.id === Number(taskId));
       if (!t) return;
       const today = todayISO();
-      const rt = allRealtimeLogs.find(x => (x.log_date === today || x.action === 'Suspend') && String(x.pic).trim().toLowerCase() === String(t.pic).trim().toLowerCase() && String(x.task).trim().toLowerCase() === String(t.task).trim().toLowerCase());
+      const tIdentity = makeTaskIdentityKey(t.pic, t.task, t.task_details);
+      const rt = allRealtimeLogs.find(x => (x.log_date === today || x.action === 'Suspend') && makeTaskIdentityKey(x.pic, x.task, x.task_details) === tIdentity);
       const pic = t.pic;
       const taskName = t.task;
 
@@ -3500,12 +3606,10 @@
 
         if (prevTask) {
           const today = todayISO();
-          const picNorm = String(prevTask.pic || '').trim().toLowerCase();
-          const taskNorm = String(prevTask.task || '').trim().toLowerCase();
+          const prevIdentity = makeTaskIdentityKey(prevTask.pic, prevTask.task, prevTask.task_details);
           const existingTodayLog = allRealtimeLogs.find(l =>
             l.log_date === today &&
-            String(l.pic || '').trim().toLowerCase() === picNorm &&
-            String(l.task || '').trim().toLowerCase() === taskNorm
+            makeTaskIdentityKey(l.pic, l.task, l.task_details) === prevIdentity
           );
           const rtUpdates = {
             task: updates.task,
@@ -3554,7 +3658,9 @@
         await sb.from('deleted_tasks').insert([{
           pic: t.pic, task: t.task, category: t.category, status: t.status, deleted_by: currentUser.email
         }]);
-        await sb.from('realtime_log').delete().ilike('pic', t.pic).ilike('task', t.task);
+        let delQuery = sb.from('realtime_log').delete().ilike('pic', t.pic).ilike('task', t.task);
+        if (t.task_details) delQuery = delQuery.eq('task_details', t.task_details);
+        await delQuery;
       }
       await sb.from('task_log').delete().eq('id', id);
       showToast(`Deleted: ${taskName}`);
