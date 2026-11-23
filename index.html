@@ -153,8 +153,38 @@
 </head>
 <body class="overflow-hidden h-screen flex text-slate-900">
 
+  <!-- ==================== SESSION RESTORE OVERLAY (NO LOGIN FLASH) ==================== -->
+  <div id="sessionBootLoader" class="fixed inset-0 z-[60] bg-[#0A0A0B] hidden flex-col items-center justify-center gap-4 text-white">
+    <div class="w-12 h-12 rounded-2xl bg-white p-2 flex items-center justify-center shadow-lg">
+      <img src="https://media.licdn.com/dms/image/v2/D560BAQHrsJvCS4HReg/company-logo_200_200/B56ZZeRENuHsAI-/0/1745338254638/i_hate_flying_bugs_el_salvador_logo?e=2147483647&v=beta&t=VUkNwS3viEJLgTmRFggDn68u7IFRo8Xt_Gew89SP9x0" alt="IHFB" class="max-w-full max-h-full object-contain">
+    </div>
+    <div class="flex items-center gap-2 text-xs font-semibold tracking-wider uppercase text-slate-300">
+      <span class="w-2 h-2 rounded-full bg-[#1A64FF] animate-ping"></span>
+      <span>Restoring Workspace...</span>
+    </div>
+  </div>
+  <script>
+    (function() {
+      try {
+        if (localStorage.getItem('ihfb_sb_email')) {
+          document.getElementById('sessionBootLoader').classList.remove('hidden');
+          document.getElementById('sessionBootLoader').classList.add('flex');
+        }
+      } catch (e) {}
+    })();
+  </script>
+
   <!-- ==================== CORPORATE SIGN-IN GATE ==================== -->
   <div id="loginScreen" class="fixed inset-0 z-50 bg-[#0A0A0B] flex items-center justify-center p-4 sm:p-6">
+  <script>
+    (function() {
+      try {
+        if (localStorage.getItem('ihfb_sb_email')) {
+          document.getElementById('loginScreen').classList.add('hidden');
+        }
+      } catch (e) {}
+    })();
+  </script>
     <!-- Subtle Ambient Brand Glow -->
     <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_top,#1e293b_0%,#0A0A0B_65%)] opacity-80 pointer-events-none"></div>
     <div class="relative bg-white rounded-2xl shadow-[0_24px_60px_-15px_rgba(0,0,0,0.65)] max-w-[430px] w-full overflow-hidden border border-slate-200/90">
@@ -677,23 +707,26 @@
                     </div>
                   </div>
 
-                  <!-- Operational Criteria Block -->
+                  <!-- Operational Criteria Block (Mandatory) -->
                   <div class="p-5 rounded-xl bg-white border border-slate-200 shadow-2xs space-y-4">
-                    <div class="text-[11px] font-bold uppercase tracking-wider text-slate-400 border-b border-slate-100 pb-2">Execution Criteria</div>
+                    <div class="flex items-center justify-between border-b border-slate-100 pb-2">
+                      <span class="text-[11px] font-bold uppercase tracking-wider text-slate-500">Execution Criteria</span>
+                      <span class="text-[10.5px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-rose-50 text-rose-700 border border-rose-200">Required</span>
+                    </div>
                     <div>
                       <label class="flex items-center gap-1.5 text-[11px] font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
                         <span class="w-1.5 h-1.5 rounded-full bg-[#1A64FF]"></span>
-                        <span>Operational Scope (What it involves)</span>
+                        <span>Operational Scope (What it involves) <span class="text-rose-600">*</span></span>
                       </label>
-                      <textarea id="mgmtInvolvesInput" rows="2" placeholder="Outline the standard procedure..." class="exec-input w-full px-3.5 py-2.5"></textarea>
+                      <textarea id="mgmtInvolvesInput" rows="2" required placeholder="Required: Outline the standard procedure..." class="exec-input w-full px-3.5 py-2.5"></textarea>
                     </div>
 
                     <div>
                       <label class="flex items-center gap-1.5 text-[11px] font-semibold text-slate-700 uppercase tracking-wider mb-1.5">
                         <span class="w-1.5 h-1.5 rounded-full bg-[#10B981]"></span>
-                        <span>Definition of Done (Completed when)</span>
+                        <span>Definition of Done (Completed when) <span class="text-rose-600">*</span></span>
                       </label>
-                      <textarea id="mgmtDoneWhenInput" rows="2" placeholder="Specify exact completion criteria..." class="exec-input w-full px-3.5 py-2.5"></textarea>
+                      <textarea id="mgmtDoneWhenInput" rows="2" required placeholder="Required: Specify exact completion criteria..." class="exec-input w-full px-3.5 py-2.5"></textarea>
                     </div>
                   </div>
 
@@ -1588,6 +1621,8 @@
     let batchCardCounter = 0;
     let rtScopeAllTeam = true;
     let rtSubscribed = false;
+    let activeWrites = 0;
+    const pendingStatusLocks = {};
 
     let hiddenRoutines = {};
     try {
@@ -1779,8 +1814,13 @@
 
       if (error || !data) {
         localStorage.removeItem('ihfb_sb_email');
-        errText.textContent = error ? 'Connection error: ' + error.message : 'Account not found in Access directory.';
-        errBox.classList.remove('hidden');
+        const bootEl = document.getElementById('sessionBootLoader');
+        if (bootEl) { bootEl.classList.add('hidden'); bootEl.classList.remove('flex'); }
+        document.getElementById('loginScreen').classList.remove('hidden');
+        if (!isAuto) {
+          errText.textContent = error ? 'Connection error: ' + error.message : 'Account not found in Access directory.';
+          errBox.classList.remove('hidden');
+        }
         return;
       }
 
@@ -1792,6 +1832,8 @@
       };
       localStorage.setItem('ihfb_sb_email', currentUser.email);
 
+      const bootEl = document.getElementById('sessionBootLoader');
+      if (bootEl) { bootEl.classList.add('hidden'); bootEl.classList.remove('flex'); }
       document.getElementById('loginScreen').classList.add('hidden');
       document.getElementById('appSidebar').classList.remove('hidden');
       document.getElementById('appSidebar').classList.add('flex');
@@ -1863,6 +1905,18 @@
       allTasks = resTasks.data || [];
       allRealtimeLogs = resRt.data || [];
 
+      // Preserve any freshly committed status transitions against stale read replicas
+      const nowMs = Date.now();
+      allTasks.forEach(t => {
+        const lock = pendingStatusLocks[t.id];
+        if (lock && lock.expiresAt > nowMs) {
+          t.status = lock.status;
+          if (lock.cause !== undefined) t.cause_of_delay = lock.cause;
+        } else if (lock) {
+          delete pendingStatusLocks[t.id];
+        }
+      });
+
       populateMemberSelects();
       renderAllViews();
       enhanceCustomSelects();
@@ -1876,8 +1930,12 @@
       if (rtSubscribed) return;
       rtSubscribed = true;
       sb.channel('ihfb-exec-live')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'task_log' }, () => syncAllData(false))
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'realtime_log' }, () => syncAllData(false))
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'task_log' }, () => {
+          if (activeWrites === 0) syncAllData(false);
+        })
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'realtime_log' }, () => {
+          if (activeWrites === 0) syncAllData(false);
+        })
         .subscribe();
     }
 
@@ -1947,7 +2005,10 @@
       const rtTodayMap = {};
       allRealtimeLogs.forEach(r => {
         if (r.log_date === today) {
-          rtTodayMap[`${String(r.pic).trim().toLowerCase()}||${String(r.task).trim().toLowerCase()}`] = String(r.action || '').toLowerCase();
+          const k = `${String(r.pic).trim().toLowerCase()}||${String(r.task).trim().toLowerCase()}`;
+          if (!rtTodayMap[k]) {
+            rtTodayMap[k] = String(r.action || '').toLowerCase();
+          }
         }
       });
 
@@ -2205,9 +2266,17 @@
           </div>
         </div>
 
+        <div id="bCriteriaPreview-${id}" class="hidden p-3 rounded-xl bg-emerald-50/70 border border-emerald-200/90 text-xs space-y-1">
+          <div class="text-[10.5px] font-bold uppercase tracking-wider text-emerald-800 flex items-center gap-1.5">
+            <i data-lucide="check-circle-2" class="w-3.5 h-3.5 text-[#10B981]"></i>
+            <span>Completed When (Execution Criteria)</span>
+          </div>
+          <p id="bCriteriaText-${id}" class="text-slate-700 font-medium pl-5"></p>
+        </div>
+
         <div>
-          <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1.5">Deliverable Notes</label>
-          <textarea id="bDetails-${id}" rows="2" placeholder="Specify execution details, context, or expected deliverables..." class="exec-input w-full px-3.5 py-2.5"></textarea>
+          <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1.5">Execution Criteria / Deliverable Notes <span class="text-rose-600">*</span></label>
+          <textarea id="bDetails-${id}" rows="2" required placeholder="Required: Specify execution details, context, or expected deliverables..." class="exec-input w-full px-3.5 py-2.5"></textarea>
         </div>
 
         <div class="p-3.5 rounded-xl bg-slate-50/70 border border-slate-200/80 space-y-2">
@@ -2294,16 +2363,30 @@
       document.querySelectorAll('.batch-card').forEach(c => populateBatchCardSelectors(c.dataset.cardId));
     }
 
+    function applyBatchDefinitionPreview(id, def) {
+      const box = document.getElementById('bCriteriaPreview-' + id);
+      const txt = document.getElementById('bCriteriaText-' + id);
+      if (def && def.done_when && String(def.done_when).trim()) {
+        if (box) box.classList.remove('hidden');
+        if (txt) txt.textContent = String(def.done_when).trim();
+      } else {
+        if (box) box.classList.add('hidden');
+        if (txt) txt.textContent = '';
+      }
+      refreshIcons();
+    }
+
     function onBatchRoutineChange(id) {
       const pic = getActiveMinePic();
       const val = document.getElementById('bRoutineSel-' + id).value;
       const def = allDefinitions.find(d => String(d.member).trim().toLowerCase() === pic.toLowerCase() && d.task === val);
+      applyBatchDefinitionPreview(id, def);
       if (def) {
         if (def.area) {
           document.getElementById('bAreaSel-' + id).value = def.area;
           syncCustomSelectUI('bAreaSel-' + id);
         }
-        if (def.involves && !document.getElementById('bDetails-' + id).value) {
+        if (def.involves) {
           document.getElementById('bDetails-' + id).value = def.involves;
         }
       }
@@ -2313,12 +2396,13 @@
       const pic = getActiveMinePic();
       const val = document.getElementById('bOnDemandSel-' + id).value;
       const def = allDefinitions.find(d => String(d.member).trim().toLowerCase() === pic.toLowerCase() && d.task === val);
+      applyBatchDefinitionPreview(id, def);
       if (def) {
         if (def.area) {
           document.getElementById('bAreaSel-' + id).value = def.area;
           syncCustomSelectUI('bAreaSel-' + id);
         }
-        if (def.involves && !document.getElementById('bDetails-' + id).value) {
+        if (def.involves) {
           document.getElementById('bDetails-' + id).value = def.involves;
         }
       }
@@ -2356,7 +2440,18 @@
         } else {
           taskName = document.getElementById('bOnDemandSel-' + id).value;
         }
-        if (!taskName) return showToast(`Select or enter a task title for Entry #${id}`, true);
+        if (!taskName) return showToast(`Select a task title for Entry #${id}`, true);
+
+        const detailsEl = document.getElementById('bDetails-' + id);
+        const detailsVal = detailsEl ? detailsEl.value.trim() : '';
+        if (detailsEl) detailsEl.classList.remove('border-rose-500', 'ring-2', 'ring-rose-200');
+        if (!detailsVal) {
+          if (detailsEl) {
+            detailsEl.classList.add('border-rose-500', 'ring-2', 'ring-rose-200');
+            detailsEl.focus();
+          }
+          return showToast(`Execution Criteria / Deliverable Notes are required for Entry #${id}`, true);
+        }
 
         const start = document.getElementById('bStart-' + id).value || todayISO();
         const due = document.getElementById('bDue-' + id).value || start;
@@ -2366,7 +2461,7 @@
           due_date: due,
           overdue: calcOverdue(due, 'Not Started'),
           task: taskName,
-          task_details: document.getElementById('bDetails-' + id).value.trim(),
+          task_details: detailsVal,
           status: 'Not Started',
           link_1: document.getElementById('bLink1-' + id).value.trim(),
           link_2: document.getElementById('bLink2-' + id).value.trim(),
@@ -2414,8 +2509,31 @@
     async function saveTaskDefinitionRecord() {
       const pic = getActiveMinePic();
       const origName = document.getElementById('mgmtDefSelect').value;
-      const newName = document.getElementById('mgmtTaskNameInput').value.trim();
-      if (!newName) return showToast('Task title cannot be empty.', true);
+      const titleEl = document.getElementById('mgmtTaskNameInput');
+      const involvesEl = document.getElementById('mgmtInvolvesInput');
+      const doneWhenEl = document.getElementById('mgmtDoneWhenInput');
+
+      const newName = titleEl.value.trim();
+      const involvesVal = involvesEl.value.trim();
+      const doneWhenVal = doneWhenEl.value.trim();
+
+      [titleEl, involvesEl, doneWhenEl].forEach(el => el.classList.remove('border-rose-500', 'ring-2', 'ring-rose-200'));
+
+      if (!newName) {
+        titleEl.classList.add('border-rose-500', 'ring-2', 'ring-rose-200');
+        titleEl.focus();
+        return showToast('Task title is required.', true);
+      }
+      if (!involvesVal) {
+        involvesEl.classList.add('border-rose-500', 'ring-2', 'ring-rose-200');
+        involvesEl.focus();
+        return showToast('Execution Criteria required: fill in Operational Scope (What it involves).', true);
+      }
+      if (!doneWhenVal) {
+        doneWhenEl.classList.add('border-rose-500', 'ring-2', 'ring-rose-200');
+        doneWhenEl.focus();
+        return showToast('Execution Criteria required: fill in Definition of Done (Completed when).', true);
+      }
 
       const payload = {
         member: pic,
@@ -2423,8 +2541,8 @@
         category: document.getElementById('mgmtCategoryInput').value,
         frequency: document.getElementById('mgmtFreqInput').value,
         area: document.getElementById('mgmtAreaInput').value,
-        involves: document.getElementById('mgmtInvolvesInput').value.trim(),
-        done_when: document.getElementById('mgmtDoneWhenInput').value.trim()
+        involves: involvesVal,
+        done_when: doneWhenVal
       };
 
       if (origName !== '__NEW__' && origName !== newName) {
@@ -2855,55 +2973,84 @@
       const task = allTasks.find(t => t.id === taskId);
       if (!task) return;
 
+      const prevStatus = task.status;
+      const prevCause = task.cause_of_delay || '';
       const timeStr = timeNowStr();
       const today = todayISO();
-      let updatedCause = task.cause_of_delay || '';
+      let updatedCause = prevCause;
       if (causeNote) updatedCause = updatedCause ? `${updatedCause} | ${causeNote}` : causeNote;
 
+      // Lock optimistic state so realtime echoes cannot revert it while saving
+      pendingStatusLocks[taskId] = { status: newStatus, cause: updatedCause, expiresAt: Date.now() + 6000 };
       task.status = newStatus;
       task.cause_of_delay = updatedCause;
       renderAllViews();
-      showToast(`Status: ${newStatus}`);
 
-      await sb.from('task_log').update({
-        status: newStatus,
-        cause_of_delay: updatedCause,
-        overdue: calcOverdue(task.due_date, newStatus)
-      }).eq('id', taskId);
+      activeWrites++;
+      try {
+        const { error: taskErr } = await sb.from('task_log').update({
+          status: newStatus,
+          cause_of_delay: updatedCause,
+          overdue: calcOverdue(task.due_date, newStatus)
+        }).eq('id', taskId);
 
-      const existingLog = allRealtimeLogs.find(l => l.pic === task.pic && l.task === task.task && (l.log_date === today || l.action === 'Suspend'));
-      if (existingLog) {
-        let duration = existingLog.duration;
-        if ((newStatus === 'Completed' || newStatus === 'Paused') && existingLog.start_time && existingLog.start_time !== '-') {
-          const startMs = new Date(`${today}T${existingLog.start_time}`).getTime();
-          if (!isNaN(startMs)) {
-            const mins = Math.max(1, Math.round((Date.now() - startMs) / 60000));
-            duration = mins < 60 ? `${mins}m` : `${Math.floor(mins/60)}h ${mins%60}m`;
-          }
+        if (taskErr) {
+          delete pendingStatusLocks[taskId];
+          task.status = prevStatus;
+          task.cause_of_delay = prevCause;
+          renderAllViews();
+          return showToast('Error saving status: ' + taskErr.message, true);
         }
-        const preservedStart = (existingLog.start_time && existingLog.start_time !== '-') ? existingLog.start_time : timeStr;
-        await sb.from('realtime_log').update({
-          action: newStatus,
-          start_time: preservedStart,
-          end_time: (newStatus === 'Completed' || newStatus === 'Paused') ? timeStr : existingLog.end_time,
-          duration: duration,
-          cause: updatedCause,
-          updated_at: new Date().toISOString()
-        }).eq('log_date', today).ilike('pic', task.pic).ilike('task', task.task);
-      } else {
-        await sb.from('realtime_log').insert([{
-          pic: task.pic,
-          task: task.task,
-          category: task.category,
-          task_details: task.task_details,
-          action: newStatus,
-          start_time: timeStr,
-          end_time: newStatus === 'Completed' ? timeStr : '-',
-          duration: newStatus === 'Completed' ? '1m' : '-',
-          log_date: today,
-          cause: updatedCause,
-          area: task.area
-        }]);
+
+        const picNorm = String(task.pic || '').trim().toLowerCase();
+        const taskNorm = String(task.task || '').trim().toLowerCase();
+        const existingTodayLog = allRealtimeLogs.find(l =>
+          l.log_date === today &&
+          String(l.pic || '').trim().toLowerCase() === picNorm &&
+          String(l.task || '').trim().toLowerCase() === taskNorm
+        );
+
+        if (existingTodayLog) {
+          let duration = existingTodayLog.duration;
+          if ((newStatus === 'Completed' || newStatus === 'Paused') && existingTodayLog.start_time && existingTodayLog.start_time !== '-') {
+            const startMs = new Date(`${today}T${existingTodayLog.start_time}`).getTime();
+            if (!isNaN(startMs)) {
+              const mins = Math.max(1, Math.round((Date.now() - startMs) / 60000));
+              duration = mins < 60 ? `${mins}m` : `${Math.floor(mins/60)}h ${mins%60}m`;
+            }
+          }
+          const preservedStart = (existingTodayLog.start_time && existingTodayLog.start_time !== '-') ? existingTodayLog.start_time : timeStr;
+          const rtPayload = {
+            action: newStatus,
+            start_time: preservedStart,
+            end_time: (newStatus === 'Completed' || newStatus === 'Paused') ? timeStr : existingTodayLog.end_time,
+            duration: duration,
+            cause: updatedCause,
+            updated_at: new Date().toISOString()
+          };
+          Object.assign(existingTodayLog, rtPayload);
+          await sb.from('realtime_log').update(rtPayload).eq('id', existingTodayLog.id);
+        } else {
+          const newRtRow = {
+            pic: task.pic,
+            task: task.task,
+            category: task.category,
+            task_details: task.task_details,
+            action: newStatus,
+            start_time: timeStr,
+            end_time: (newStatus === 'Completed' || newStatus === 'Paused') ? timeStr : '-',
+            duration: newStatus === 'Completed' ? '1m' : '-',
+            log_date: today,
+            cause: updatedCause,
+            area: task.area
+          };
+          const { data: insertedRt } = await sb.from('realtime_log').insert([newRtRow]).select().maybeSingle();
+          if (insertedRt) allRealtimeLogs.unshift(insertedRt);
+        }
+
+        showToast(`Status saved: ${newStatus}`);
+      } finally {
+        activeWrites = Math.max(0, activeWrites - 1);
       }
     }
 
@@ -3342,25 +3489,50 @@
         link_3: document.getElementById('editTaskLink3').value.trim()
       };
 
-      const { error } = await sb.from('task_log').update(updates).eq('id', id);
-      if (error) return showToast('Error updating record: ' + error.message, true);
+      pendingStatusLocks[id] = { status: status, cause: updates.cause_of_delay, expiresAt: Date.now() + 6000 };
+      activeWrites++;
+      try {
+        const { error } = await sb.from('task_log').update(updates).eq('id', id);
+        if (error) {
+          delete pendingStatusLocks[id];
+          return showToast('Error updating record: ' + error.message, true);
+        }
 
-      // Propagate status & details ONLY to today's matching realtime_log entry for this specific task
-      if (prevTask) {
-        const today = todayISO();
-        const rtUpdates = {
-          task: updates.task,
-          category: updates.category,
-          action: status,
-          task_details: updates.task_details,
-          area: updates.area,
-          cause: updates.cause_of_delay,
-          link_1: updates.link_1,
-          link_2: updates.link_2,
-          link_3: updates.link_3,
-          updated_at: new Date().toISOString()
-        };
-        await sb.from('realtime_log').update(rtUpdates).eq('log_date', today).ilike('pic', prevTask.pic).ilike('task', prevTask.task);
+        if (prevTask) {
+          const today = todayISO();
+          const picNorm = String(prevTask.pic || '').trim().toLowerCase();
+          const taskNorm = String(prevTask.task || '').trim().toLowerCase();
+          const existingTodayLog = allRealtimeLogs.find(l =>
+            l.log_date === today &&
+            String(l.pic || '').trim().toLowerCase() === picNorm &&
+            String(l.task || '').trim().toLowerCase() === taskNorm
+          );
+          const rtUpdates = {
+            task: updates.task,
+            category: updates.category,
+            action: status,
+            task_details: updates.task_details,
+            area: updates.area,
+            cause: updates.cause_of_delay,
+            link_1: updates.link_1,
+            link_2: updates.link_2,
+            link_3: updates.link_3,
+            updated_at: new Date().toISOString()
+          };
+          if (existingTodayLog) {
+            await sb.from('realtime_log').update(rtUpdates).eq('id', existingTodayLog.id);
+          } else {
+            await sb.from('realtime_log').insert([Object.assign({
+              pic: prevTask.pic,
+              start_time: status === 'Not Started' ? '-' : timeNowStr(),
+              end_time: (status === 'Completed' || status === 'Paused') ? timeNowStr() : '-',
+              duration: '-',
+              log_date: today
+            }, rtUpdates)]);
+          }
+        }
+      } finally {
+        activeWrites = Math.max(0, activeWrites - 1);
       }
 
       closeEditDrawer();
