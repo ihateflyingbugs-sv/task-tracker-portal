@@ -2481,14 +2481,11 @@
 
       const grid = document.getElementById('homeTeamWorkloadGrid');
       grid.innerHTML = memberStats.map(({ member: m, count }) => {
-        const activeStyle = count > 0 ? 'border-amber-300 bg-amber-50/35' : 'border-slate-200 bg-white';
+        const activeStyle = count > 0 ? 'border-amber-300 bg-amber-50/35 hover:border-amber-400' : 'border-slate-200 bg-white hover:border-slate-300';
         const pillStyle = count > 0 ? 'bg-amber-50 text-amber-800 border-amber-300' : 'bg-slate-100 text-slate-500 border-slate-200';
         return `
-          <div onclick="filterRealtimeMember('${esc(m)}')" class="p-3.5 rounded-xl border ${activeStyle} hover:border-slate-400 flex items-center justify-between cursor-pointer transition group">
-            <div class="flex items-center gap-2.5 min-w-0">
-              <span class="w-7 h-7 rounded-md bg-slate-100 border border-slate-200 text-slate-700 text-xs font-bold flex items-center justify-center shrink-0">${m.charAt(0)}</span>
-              <span class="text-xs font-semibold text-slate-800 truncate">${esc(m)}</span>
-            </div>
+          <div onclick="filterRealtimeMember('${esc(m)}')" class="px-4 py-3.5 rounded-xl border ${activeStyle} flex items-center justify-between gap-2 cursor-pointer transition group">
+            <span class="text-[13px] font-semibold text-slate-800 truncate">${esc(m)}</span>
             <div class="flex items-center gap-2 shrink-0">
               <span class="font-mono text-[11px] font-semibold px-2 py-0.5 rounded border ${pillStyle}">${count} active</span>
               <i data-lucide="chevron-right" class="w-3.5 h-3.5 text-slate-400 group-hover:translate-x-0.5 transition"></i>
@@ -2558,7 +2555,7 @@
       document.getElementById('inactiveCaretIcon').classList.toggle('rotate-180');
     }
 
-    function renderMyTaskView() {
+    function renderMyTaskView(preserveMgmtForm = false) {
       const pic = getActiveMinePic();
       const myDefs = allDefinitions.filter(d => String(d.member || '').trim().toLowerCase() === pic.toLowerCase());
 
@@ -2599,11 +2596,13 @@
       document.getElementById('hiddenCountBadge').textContent = hiddenCount;
 
       // Management selector
-      const mgmtSel = document.getElementById('mgmtDefSelect');
-      mgmtSel.innerHTML = '<option value="__NEW__">+ Register New Task Definition</option>' +
-        myDefs.map(d => `<option value="${esc(d.task)}">${esc(d.task)} (${esc(d.category || 'Routine')})</option>`).join('');
-      onMgmtDefSelectChange();
-      enhanceCustomSelects();
+      if (!preserveMgmtForm) {
+        const mgmtSel = document.getElementById('mgmtDefSelect');
+        mgmtSel.innerHTML = '<option value="__NEW__">+ Register New Task Definition</option>' +
+          myDefs.map(d => `<option value="${esc(d.task)}">${esc(d.task)} (${esc(d.category || 'Routine')})</option>`).join('');
+        onMgmtDefSelectChange();
+        enhanceCustomSelects();
+      }
 
       // Rolling Last 7 Days Log sourced from realtime_log (plus any Not Started tasks started in the last 7 days), regardless of status
       const today7 = todayISO();
@@ -2710,8 +2709,18 @@
       if (isVisible) delete hiddenRoutines[key];
       else hiddenRoutines[key] = true;
       try { localStorage.setItem('tt_hidden_routines', JSON.stringify(hiddenRoutines)); } catch (e) {}
-      renderMyTaskView();
-      updateAllBatchCardDropdowns();
+
+      const activeList = document.getElementById('activeVisibilityList');
+      const inactiveList = document.getElementById('inactiveVisibilityBox');
+      const prevActiveScroll = activeList ? activeList.scrollTop : 0;
+      const prevInactiveScroll = inactiveList ? inactiveList.scrollTop : 0;
+
+      setTimeout(() => {
+        renderMyTaskView(true);
+        if (activeList) activeList.scrollTop = prevActiveScroll;
+        if (inactiveList) inactiveList.scrollTop = prevInactiveScroll;
+        updateAllBatchCardDropdowns();
+      }, 190);
     }
 
     function initBatchCards() {
@@ -3101,6 +3110,26 @@
     }
 
     // ==================== 3. REAL-TIME MONITOR ====================
+    function getStatusRowSurface(status) {
+      const a = String(status || '').trim().toLowerCase();
+      if (a === 'in progress' || a === 'start') {
+        return 'bg-amber-50/35 border-amber-300 hover:border-amber-400';
+      }
+      if (a === 'completed' || a === 'complete') {
+        return 'bg-emerald-50/35 border-emerald-300 hover:border-emerald-400';
+      }
+      if (a === 'paused' || a === 'pause') {
+        return 'bg-blue-50/35 border-blue-300 hover:border-blue-400';
+      }
+      if (a === 'suspend' || a === 'suspended') {
+        return 'bg-orange-50/35 border-orange-300 hover:border-orange-400';
+      }
+      if (a === 'cancelled' || a === 'cancel') {
+        return 'bg-red-50/35 border-red-300 hover:border-red-400';
+      }
+      return 'bg-slate-50/50 border-slate-200/80 hover:bg-white hover:border-slate-300';
+    }
+
     function getStatusBadge(status) {
       const s = String(status || 'Not Started');
       const label = (s === 'Start') ? 'In progress' : (s === 'Pause') ? 'Paused' : (s === 'Complete') ? 'Completed' : (s === 'Cancel') ? 'Cancelled' : s;
@@ -3415,9 +3444,7 @@
             filteredLogs.map(l => {
               const act = String(l.action || '').toLowerCase();
               const isNotStarted = (act === 'not started');
-              const rowHighlight = (act === 'in progress' || act === 'start')
-                ? 'bg-amber-50/35 border-amber-300 hover:border-amber-400'
-                : (isNotStarted ? 'bg-slate-50/50 border-slate-200/80 hover:bg-white hover:border-slate-300' : 'bg-white border-slate-200 hover:border-slate-300');
+              const rowHighlight = getStatusRowSurface(l.action);
 
               return `
                 <div onclick="openDetailInspectorById(${l.id}, '${esc(l.action)}', '${esc(l.start_time || '-')}')" class="p-3.5 rounded-xl border ${rowHighlight} transition cursor-pointer group space-y-2.5">
@@ -3463,9 +3490,7 @@
             filteredLogs.map(l => {
               const act = String(l.action || '').toLowerCase();
               const isNotStarted = (act === 'not started');
-              const rowHighlight = (act === 'in progress' || act === 'start')
-                ? 'bg-amber-50/35 border-amber-300 hover:border-amber-400'
-                : (isNotStarted ? 'bg-slate-50/50 border-slate-200/80 hover:bg-white hover:border-slate-300' : 'bg-white border-slate-200 hover:border-slate-300');
+              const rowHighlight = getStatusRowSurface(l.action);
 
               return `
                 <div onclick="openDetailInspectorById(${l.id}, '${esc(l.action)}', '${esc(l.start_time || '-')}')" class="px-4 py-3 rounded-xl border ${rowHighlight} transition cursor-pointer group grid grid-cols-1 ${gridColsClass} items-center gap-3.5">
