@@ -1714,10 +1714,13 @@
     }
 
     function getRtSortIndicator(field) {
-      if (rtSortField !== field) return '<span class="text-slate-300 ml-1 text-[10px]">↕</span>';
-      return rtSortDir === 'asc'
-        ? '<span class="text-[#1A64FF] ml-1 text-[10px] font-extrabold">▲</span>'
-        : '<span class="text-[#1A64FF] ml-1 text-[10px] font-extrabold">▼</span>';
+      if (rtSortField !== field) {
+        return `<span class="inline-flex items-center justify-center w-5 h-5 ml-1.5 rounded bg-slate-200/80 text-slate-700 group-hover:bg-slate-300 transition"><svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m7 15 5 5 5-5"/><path d="m7 9 5-5 5 5"/></svg></span>`;
+      }
+      if (rtSortDir === 'asc') {
+        return `<span class="inline-flex items-center justify-center w-5 h-5 ml-1.5 rounded bg-[#1A64FF] text-white shadow-2xs"><svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="m18 15-6-6-6 6"/></svg></span>`;
+      }
+      return `<span class="inline-flex items-center justify-center w-5 h-5 ml-1.5 rounded bg-[#1A64FF] text-white shadow-2xs"><svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></span>`;
     }
     let rtSubscribed = false;
     let activeWrites = 0;
@@ -2380,8 +2383,33 @@
 
     function sendWhatsAppReminder(mode) {
       const msg = buildWhatsAppReminderText(mode);
-      // api.whatsapp.com prompts WhatsApp Desktop App if installed, or opens WhatsApp Web seamlessly
-      window.open('https://api.whatsapp.com/send?text=' + encodeURIComponent(msg), '_blank', 'noopener');
+      const encoded = encodeURIComponent(msg);
+      const appUri = 'whatsapp://send?text=' + encoded;
+      const webUrl = 'https://web.whatsapp.com/send?text=' + encoded;
+
+      // Probe OS custom protocol handler (whatsapp://):
+      // If WhatsApp Desktop App is installed, the OS opens it and triggers window blur / visibilitychange.
+      // If not installed, the browser stays focused and automatically opens WhatsApp Web after 1.1s.
+      let appOpened = false;
+      const markOpened = () => { appOpened = true; };
+      window.addEventListener('blur', markOpened, { once: true });
+      document.addEventListener('visibilitychange', () => {
+        if (document.hidden) appOpened = true;
+      }, { once: true });
+
+      const probeLink = document.createElement('a');
+      probeLink.href = appUri;
+      probeLink.style.display = 'none';
+      document.body.appendChild(probeLink);
+      probeLink.click();
+      setTimeout(() => probeLink.remove(), 100);
+
+      setTimeout(() => {
+        window.removeEventListener('blur', markOpened);
+        if (!appOpened) {
+          window.open(webUrl, '_blank', 'noopener');
+        }
+      }, 1150);
     }
 
     async function copyWhatsAppReminder(mode, btnEl) {
@@ -3425,11 +3453,11 @@
           const gridColsClass = 'lg:grid-cols-[minmax(165px,1fr)_minmax(200px,1.25fr)_minmax(165px,1.45fr)_112px_106px]';
           streamBox.innerHTML =
             `<div class="hidden lg:grid ${gridColsClass} items-center gap-3.5 px-4 py-2.5 mb-2 text-[11px] font-bold uppercase tracking-wider text-slate-600 bg-slate-50/90 rounded-lg border border-slate-200/70 select-none">
-              <button type="button" onclick="toggleRtSort('pic')" class="text-left hover:text-[#1A64FF] transition flex items-center cursor-pointer">Responsible (PIC) ${getRtSortIndicator('pic')}</button>
-              <button type="button" onclick="toggleRtSort('task')" class="text-left hover:text-[#1A64FF] transition flex items-center cursor-pointer">Task & Division ${getRtSortIndicator('task')}</button>
-              <button type="button" onclick="toggleRtSort('details')" class="text-left hover:text-[#1A64FF] transition flex items-center cursor-pointer">Deliverable Details ${getRtSortIndicator('details')}</button>
-              <button type="button" onclick="toggleRtSort('status')" class="justify-center hover:text-[#1A64FF] transition flex items-center cursor-pointer">Status ${getRtSortIndicator('status')}</button>
-              <button type="button" onclick="toggleRtSort('start_time')" class="justify-center hover:text-[#1A64FF] transition flex items-center cursor-pointer">Start Time ${getRtSortIndicator('start_time')}</button>
+              <button type="button" onclick="toggleRtSort('pic')" class="group text-left hover:text-[#1A64FF] transition flex items-center cursor-pointer">Responsible (PIC) ${getRtSortIndicator('pic')}</button>
+              <button type="button" onclick="toggleRtSort('task')" class="group text-left hover:text-[#1A64FF] transition flex items-center cursor-pointer">Task & Division ${getRtSortIndicator('task')}</button>
+              <button type="button" onclick="toggleRtSort('details')" class="group text-left hover:text-[#1A64FF] transition flex items-center cursor-pointer">Deliverable Details ${getRtSortIndicator('details')}</button>
+              <button type="button" onclick="toggleRtSort('status')" class="group justify-center hover:text-[#1A64FF] transition flex items-center cursor-pointer">Status ${getRtSortIndicator('status')}</button>
+              <button type="button" onclick="toggleRtSort('start_time')" class="group justify-center hover:text-[#1A64FF] transition flex items-center cursor-pointer">Start Time ${getRtSortIndicator('start_time')}</button>
             </div>` +
             `<div class="space-y-2.5 my-1">` +
             filteredLogs.map(l => {
