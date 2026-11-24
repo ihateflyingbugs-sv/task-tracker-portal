@@ -1757,8 +1757,14 @@
       return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
     }
 
+    function canEditTaskRecord(task) {
+      if (!currentUser || !task) return false;
+      if (currentUser.isSupervisor) return true;
+      return String(task.pic || '').trim().toLowerCase() === String(currentUser.member || '').trim().toLowerCase();
+    }
+
     function makeTaskIdentityKey(pic, task, details) {
-      return `String(pic||'').trim().toLowerCase()||{String(task || '').trim().toLowerCase()}||${String(details || '').trim().toLowerCase()}`;
+      return `${String(pic || '').trim().toLowerCase()}||${String(task || '').trim().toLowerCase()}||${String(details || '').trim().toLowerCase()}`;
     }
 
     function timeNowStr() {
@@ -2105,7 +2111,7 @@
               <span class="text-xs font-semibold text-slate-800 truncate">${esc(m)}</span>
             </div>
             <div class="flex items-center gap-2 shrink-0">
-              <span class="font-mono text-[11px] font-semibold px-2 py-0.5 rounded border pillStyle">{count} active</span>
+              <span class="font-mono text-[11px] font-semibold px-2 py-0.5 rounded border ${pillStyle}">${count} active</span>
               <i data-lucide="chevron-right" class="w-3.5 h-3.5 text-slate-400 group-hover:translate-x-0.5 transition"></i>
             </div>
           </div>
@@ -2183,7 +2189,7 @@
       let activeHtml = '', inactiveHtml = '', hiddenCount = 0;
 
       myDefs.forEach(d => {
-        const key = `pic||{d.task}`;
+        const key = `${pic}||${d.task}`;
         const isHidden = hiddenRoutines[key] === true;
         if (isHidden) {
           hiddenCount++;
@@ -2191,7 +2197,7 @@
             <div class="p-2.5 rounded-lg bg-slate-50 border border-dashed border-slate-200 flex items-center justify-between gap-2 text-xs text-slate-400">
               <span class="flex items-center gap-2 min-w-0"><span class="w-1.5 h-1.5 rounded-full bg-[#10B981] shrink-0"></span><span class="truncate">${esc(d.task)}</span></span>
               <label class="corp-switch">
-                <input type="checkbox" onchange="toggleRoutineVisibility('esc(pic)','{esc(d.task)}', this.checked)">
+                <input type="checkbox" onchange="toggleRoutineVisibility('${esc(pic)}', '${esc(d.task)}', this.checked)">
                 <span class="corp-slider"></span>
               </label>
             </div>
@@ -2201,7 +2207,7 @@
             <div class="p-2.5 rounded-lg bg-slate-50/80 border border-slate-200/80 flex items-center justify-between gap-2 text-xs font-medium text-slate-800">
               <span class="flex items-center gap-2 min-w-0"><span class="w-1.5 h-1.5 rounded-full bg-[#10B981] shrink-0"></span><span class="truncate">${esc(d.task)}</span></span>
               <label class="corp-switch">
-                <input type="checkbox" checked onchange="toggleRoutineVisibility('esc(pic)','{esc(d.task)}', this.checked)">
+                <input type="checkbox" checked onchange="toggleRoutineVisibility('${esc(pic)}', '${esc(d.task)}', this.checked)">
                 <span class="corp-slider"></span>
               </label>
             </div>
@@ -2216,27 +2222,33 @@
       // Management selector
       const mgmtSel = document.getElementById('mgmtDefSelect');
       mgmtSel.innerHTML = '<option value="__NEW__">+ Register New Task Definition</option>' +
-        myDefs.map(d => `<option value="esc(d.task)">{esc(d.task)} (${esc(d.category || 'Routine')})</option>`).join('');
+        myDefs.map(d => `<option value="${esc(d.task)}">${esc(d.task)} (${esc(d.category || 'Routine')})</option>`).join('');
       onMgmtDefSelectChange();
       enhanceCustomSelects();
 
-      // Last 7 days table (includes tasks started in last 7 days OR active/open tasks due in last 7 days or later)
-      const from7 = shiftDaysISO(-6);
+      // Last 7 days table: ALWAYS keeps all tasks from the last 7 days regardless of status (Completed, Cancelled, Suspend, Paused, In progress, Not Started)
+      const from7 = shiftDaysISO(-7);
       const picNorm7 = String(pic || '').trim().toLowerCase();
       const recent = allTasks.filter(t => {
         if (String(t.pic || '').trim().toLowerCase() !== picNorm7) return false;
-        const sDate = String(t.start_date || '').trim();
-        const dDate = String(t.due_date || '').trim();
-        const st = String(t.status || '').trim().toLowerCase();
-        const isActiveOpen = (st !== 'completed' && st !== 'complete' && st !== 'cancelled' && st !== 'cancel');
-        return (sDate >= from7) || (dDate >= from7) || isActiveOpen;
+        const sDate = String(t.start_date || '').trim().slice(0, 10);
+        const dDate = String(t.due_date || '').trim().slice(0, 10);
+        const cDate = String(t.created_at || '').trim().slice(0, 10);
+        return (sDate && sDate >= from7) || (dDate && dDate >= from7) || (cDate && cDate >= from7);
+      }).sort((a, b) => {
+        const dA = String(a.start_date || '').slice(0, 10);
+        const dB = String(b.start_date || '').slice(0, 10);
+        if (dB !== dA) return dB.localeCompare(dA);
+        return Number(b.id) - Number(a.id);
       });
       document.getElementById('my7DaysBadge').textContent = `${recent.length} records`;
       const tbody = document.getElementById('my7DaysTableBody');
       if (!recent.length) {
         tbody.innerHTML = '<tr><td colspan="7" class="px-4 py-8 text-center text-slate-400">No tasks logged in the last 7 days.</td></tr>';
       } else {
-        tbody.innerHTML = recent.map(t => `
+        tbody.innerHTML = recent.map(t => {
+          const editable = canEditTaskRecord(t);
+          return `
           <tr class="hover:bg-slate-50/80">
             <td class="px-4 py-2.5 font-mono text-[11px] text-slate-500">${esc(t.start_date)}</td>
             <td class="px-4 py-2.5 font-mono text-[11px] text-slate-500">${esc(t.due_date)}</td>
@@ -2245,17 +2257,20 @@
             <td class="px-4 py-2.5">${getStatusBadge(t.status)}</td>
             <td class="px-4 py-2.5 font-mono font-semibold text-rose-600">${esc(calcOverdue(t.due_date, t.status))}</td>
             <td class="px-4 py-2.5 text-right whitespace-nowrap">
-              <button type="button" onclick="openEditDrawer(${t.id})" class="px-2.5 py-1 rounded border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-semibold transition mr-1 cursor-pointer">Edit</button>
-              <button type="button" onclick="quickDeleteTask(t.id,'{esc(t.task)}')" class="p-1 rounded text-slate-400 hover:text-rose-600 transition cursor-pointer"><i data-lucide="trash-2" class="w-3.5 h-3.5 inline"></i></button>
+              ${editable ? `
+                <button type="button" onclick="openEditDrawer(${t.id})" class="px-2.5 py-1 rounded border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-semibold transition mr-1 cursor-pointer">Edit</button>
+                <button type="button" onclick="quickDeleteTask(${t.id}, '${esc(t.task)}')" class="p-1 rounded text-slate-400 hover:text-rose-600 transition cursor-pointer"><i data-lucide="trash-2" class="w-3.5 h-3.5 inline"></i></button>
+              ` : `<span class="text-[11px] text-slate-400 italic">View only</span>`}
             </td>
           </tr>
-        `).join('');
+        `;
+        }).join('');
       }
       refreshIcons();
     }
 
     function toggleRoutineVisibility(pic, taskName, isVisible) {
-      const key = `pic||{taskName}`;
+      const key = `${pic}||${taskName}`;
       if (isVisible) delete hiddenRoutines[key];
       else hiddenRoutines[key] = true;
       try { localStorage.setItem('tt_hidden_routines', JSON.stringify(hiddenRoutines)); } catch (e) {}
@@ -2321,12 +2336,12 @@
               <i data-lucide="pencil" class="w-3 h-3"></i> Rename globally
             </button>
           </div>
-          <select id="bRoutineSel-id"onchange="onBatchRoutineChange({id})" class="exec-input w-full px-3 py-2 font-medium"></select>
+          <select id="bRoutineSel-${id}" onchange="onBatchRoutineChange(${id})" class="exec-input w-full px-3 py-2 font-medium"></select>
         </div>
 
         <div id="bOnDemandBox-${id}" class="hidden space-y-2">
           <label class="block text-[11px] font-bold text-slate-600 uppercase tracking-wider">On Demand Assignment (Assigned to PIC)</label>
-          <select id="bOnDemandSel-id"onchange="onBatchOnDemandChange({id})" class="exec-input w-full px-3 py-2 font-medium"></select>
+          <select id="bOnDemandSel-${id}" onchange="onBatchOnDemandChange(${id})" class="exec-input w-full px-3 py-2 font-medium"></select>
         </div>
 
         <div class="p-3.5 rounded-xl bg-slate-50/80 border border-slate-200/80 grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -2334,13 +2349,13 @@
             <label class="flex items-center gap-1.5 text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1">
               <i data-lucide="calendar" class="w-3 h-3 text-[#1A64FF]"></i> Start Date
             </label>
-            <input type="date" id="bStart-id"value="{today}" class="exec-input w-full px-3 py-1.5 font-mono text-xs">
+            <input type="date" id="bStart-${id}" value="${today}" class="exec-input w-full px-3 py-1.5 font-mono text-xs">
           </div>
           <div>
             <label class="flex items-center gap-1.5 text-[11px] font-bold text-slate-600 uppercase tracking-wider mb-1">
               <i data-lucide="calendar-check" class="w-3 h-3 text-[#10B981]"></i> Due Date
             </label>
-            <input type="date" id="bDue-id"value="{today}" class="exec-input w-full px-3 py-1.5 font-mono text-xs">
+            <input type="date" id="bDue-${id}" value="${today}" class="exec-input w-full px-3 py-1.5 font-mono text-xs">
           </div>
         </div>
 
@@ -2418,7 +2433,7 @@
       // STRICT PIC FILTERING for both Routine and On Demand!
       const picDefs = allDefinitions.filter(d =>
         String(d.member || '').trim().toLowerCase() === pic.toLowerCase() &&
-        !hiddenRoutines[`pic||{d.task}`]
+        !hiddenRoutines[`${pic}||${d.task}`]
       );
       const routines = picDefs.filter(d => (d.category || 'Routine') === 'Routine');
       const onDemands = picDefs.filter(d => d.category === 'On Demand');
@@ -2426,13 +2441,13 @@
       const rSel = document.getElementById('bRoutineSel-' + id);
       if (rSel) {
         rSel.innerHTML = '<option value="">Select routine...</option>' +
-          routines.map(r => `<option value="esc(r.task)">{esc(r.task)}</option>`).join('');
+          routines.map(r => `<option value="${esc(r.task)}">${esc(r.task)}</option>`).join('');
       }
 
       const oSel = document.getElementById('bOnDemandSel-' + id);
       if (oSel) {
         oSel.innerHTML = '<option value="">Select assignment...</option>' +
-          onDemands.map(r => `<option value="esc(r.task)">{esc(r.task)}</option>`).join('');
+          onDemands.map(r => `<option value="${esc(r.task)}">${esc(r.task)}</option>`).join('');
       }
       enhanceCustomSelects();
     }
@@ -2661,7 +2676,7 @@
         'Not Started': 'bg-slate-100 text-slate-700 border-slate-300'
       };
       const cls = map[s] || 'bg-slate-100 text-slate-700 border-slate-300';
-      return `<span class="inline-flex items-center justify-center px-3 py-1 rounded-lg text-xs font-semibold border whitespace-nowrap cls">{esc(label)}</span>`;
+      return `<span class="inline-flex items-center justify-center px-3 py-1 rounded-lg text-xs font-semibold border whitespace-nowrap ${cls}">${esc(label)}</span>`;
     }
 
     function toggleRtTableScope(btn) {
@@ -2882,13 +2897,13 @@
               <div class="pt-2.5 border-t border-slate-100 flex items-center justify-between flex-wrap gap-2">
                 <div class="flex items-center gap-1.5 text-[11px] text-slate-500">
                   <span>Due:</span>
-                  <input type="date" value="esc(t.duedate)"onchange="updateDueDateInline({t.id}, this.value)" class="px-2 py-1 rounded border border-slate-200 font-mono text-[11px] text-slate-700 bg-slate-50">
+                  <input type="date" value="${esc(t.due_date)}" onchange="updateDueDateInline(${t.id}, this.value)" class="px-2 py-1 rounded border border-slate-200 font-mono text-[11px] text-slate-700 bg-slate-50">
                 </div>
                 <div class="flex items-center gap-1">
                   <button type="button" onclick="quickChangeStatus(${t.id}, 'In progress')" ${isRunning ? 'disabled' : ''} class="px-2.5 py-1 rounded-md text-[11px] font-semibold ${isRunning ? 'bg-amber-500 text-white' : 'bg-slate-100 hover:bg-amber-500 text-slate-700 hover:text-white'} transition cursor-pointer">
                     ${isRunning ? 'Running' : 'Start'}
                   </button>
-                  <button type="button" onclick="quickChangeStatus(t.id,'{isPaused ? 'In progress' : 'Paused'}')" class="px-2.5 py-1 rounded-md text-[11px] font-semibold ${isPaused ? 'bg-blue-600 text-white' : 'bg-slate-100 hover:bg-blue-600 text-slate-700 hover:text-white'} transition cursor-pointer">
+                  <button type="button" onclick="quickChangeStatus(${t.id}, '${isPaused ? 'In progress' : 'Paused'}')" class="px-2.5 py-1 rounded-md text-[11px] font-semibold ${isPaused ? 'bg-blue-600 text-white' : 'bg-slate-100 hover:bg-blue-600 text-slate-700 hover:text-white'} transition cursor-pointer">
                     Pause
                   </button>
                   <button type="button" onclick="confirmCompleteTask(${t.id})" class="px-2.5 py-1 rounded-md text-[11px] font-semibold bg-slate-100 hover:bg-emerald-600 text-slate-700 hover:text-white transition cursor-pointer">
@@ -2929,14 +2944,14 @@
                 : (isNotStarted ? 'bg-slate-50/50 border-slate-200/80 hover:bg-white hover:border-slate-300' : 'bg-white border-slate-200 hover:border-slate-300');
 
               return `
-                <div onclick="openDetailInspectorById(l.id,'{esc(l.action)}', '${esc(l.start_time || '-')}')" class="p-3.5 rounded-xl border ${rowHighlight} transition cursor-pointer group space-y-2.5">
+                <div onclick="openDetailInspectorById(${l.id}, '${esc(l.action)}', '${esc(l.start_time || '-')}')" class="p-3.5 rounded-xl border ${rowHighlight} transition cursor-pointer group space-y-2.5">
                   <!-- Top Row: Fixed-proportion alignment for Avatar + Task/PIC | Status | Start Time -->
                   <div class="grid grid-cols-[28px_minmax(0,1fr)_auto] items-center gap-3">
                     <span class="w-7 h-7 rounded-lg bg-slate-100 border border-slate-200 text-slate-700 font-bold text-xs flex items-center justify-center shrink-0">
                       ${esc(String(l.pic || 'U').charAt(0).toUpperCase())}
                     </span>
                     <div class="min-w-0">
-                      <div class="text-[13px] font-bold text-slate-900 group-hover:text-[#1A64FF] transition truncate" title="esc(l.task)">{esc(l.task)}</div>
+                      <div class="text-[13px] font-bold text-slate-900 group-hover:text-[#1A64FF] transition truncate" title="${esc(l.task)}">${esc(l.task)}</div>
                       <div class="text-[11.5px] font-medium text-slate-500 truncate">${esc(l.pic)}</div>
                     </div>
                     <div class="flex items-center gap-2 shrink-0">
@@ -2954,7 +2969,7 @@
                       <span class="px-2 py-0.5 rounded bg-slate-100 border border-slate-200/80 text-[10.5px] font-semibold text-slate-700 shrink-0">${esc(l.category)}</span>
                       <span class="text-[11px] font-medium text-slate-500 truncate">${esc(l.area)}</span>
                     </div>
-                    <p class="text-xs text-slate-600 truncate" title="esc(l.details||'-')">{esc(l.details || '—')}</p>
+                    <p class="text-xs text-slate-600 truncate" title="${esc(l.details || '-')}">${esc(l.details || '—')}</p>
                   </div>
                 </div>
               `;
@@ -2980,16 +2995,16 @@
                 : (isNotStarted ? 'bg-slate-50/50 border-slate-200/80 hover:bg-white hover:border-slate-300' : 'bg-white border-slate-200 hover:border-slate-300');
 
               return `
-                <div onclick="openDetailInspectorById(l.id,'{esc(l.action)}', '${esc(l.start_time || '-')}')" class="px-4 py-3 rounded-xl border ${rowHighlight} transition cursor-pointer group grid grid-cols-1 ${gridColsClass} items-center gap-3.5">
+                <div onclick="openDetailInspectorById(${l.id}, '${esc(l.action)}', '${esc(l.start_time || '-')}')" class="px-4 py-3 rounded-xl border ${rowHighlight} transition cursor-pointer group grid grid-cols-1 ${gridColsClass} items-center gap-3.5">
                   <div class="min-w-0 flex items-center gap-2.5">
                     <span class="w-7 h-7 rounded-lg bg-slate-100 border border-slate-200 text-slate-700 font-bold text-xs flex items-center justify-center shrink-0">
                       ${esc(String(l.pic || 'U').charAt(0).toUpperCase())}
                     </span>
-                    <span class="text-[13px] font-semibold text-slate-800 truncate block" title="esc(l.pic)">{esc(l.pic)}</span>
+                    <span class="text-[13px] font-semibold text-slate-800 truncate block" title="${esc(l.pic)}">${esc(l.pic)}</span>
                   </div>
 
                   <div class="min-w-0">
-                    <div class="text-[13px] font-bold text-slate-900 group-hover:text-[#1A64FF] transition truncate" title="esc(l.task)">{esc(l.task)}</div>
+                    <div class="text-[13px] font-bold text-slate-900 group-hover:text-[#1A64FF] transition truncate" title="${esc(l.task)}">${esc(l.task)}</div>
                     <div class="flex items-center flex-wrap gap-1.5 mt-0.5">
                       <span class="px-1.5 py-0.5 rounded bg-slate-100 border border-slate-200/80 text-[10.5px] font-semibold text-slate-700 shrink-0">${esc(l.category)}</span>
                       <span class="text-[10.5px] font-medium text-slate-500 truncate">${esc(l.area)}</span>
@@ -2997,7 +3012,7 @@
                   </div>
 
                   <div class="min-w-0">
-                    <p class="text-xs text-slate-600 truncate" title="esc(l.details||'-')">{esc(l.details || '—')}</p>
+                    <p class="text-xs text-slate-600 truncate" title="${esc(l.details || '-')}">${esc(l.details || '—')}</p>
                   </div>
 
                   <div class="flex items-center lg:justify-center shrink-0">
@@ -3063,6 +3078,9 @@
     async function quickChangeStatus(taskId, newStatus, causeNote = null) {
       const task = allTasks.find(t => t.id === taskId);
       if (!task) return;
+      if (!canEditTaskRecord(task)) {
+        return showToast('Read-only: You can only update your own tasks.', true);
+      }
 
       const prevStatus = task.status;
       const prevCause = task.cause_of_delay || '';
@@ -3108,7 +3126,7 @@
         if (existingTodayLog) {
           let duration = existingTodayLog.duration;
           if ((newStatus === 'Completed' || newStatus === 'Paused') && existingTodayLog.start_time && existingTodayLog.start_time !== '-') {
-            const startMs = new Date(`todayT{existingTodayLog.start_time}`).getTime();
+            const startMs = new Date(`${today}T${existingTodayLog.start_time}`).getTime();
             if (!isNaN(startMs)) {
               const elapsedSecs = Math.max(1, Math.round((Date.now() - startMs) / 1000));
               duration = formatDurationHMS(elapsedSecs);
@@ -3169,7 +3187,10 @@
     async function updateDueDateInline(taskId, newDue) {
       if (!newDue) return;
       const t = allTasks.find(x => x.id === taskId);
-      if (t) t.due_date = newDue;
+      if (!t || !canEditTaskRecord(t)) {
+        return showToast('Read-only: You can only update your own tasks.', true);
+      }
+      t.due_date = newDue;
       await sb.from('task_log').update({ due_date: newDue, overdue: calcOverdue(newDue, t ? t.status : 'Not Started') }).eq('id', taskId);
       showToast('Due date updated');
     }
@@ -3181,14 +3202,14 @@
         const el = document.getElementById(id);
         if (!el) return;
         const cur = el.value;
-        el.innerHTML = '<option value="ALL">All Personnel</option>' + members.map(m => `<option value="esc(m)">{esc(m)}</option>`).join('');
+        el.innerHTML = '<option value="ALL">All Personnel</option>' + members.map(m => `<option value="${esc(m)}">${esc(m)}</option>`).join('');
         if (cur && Array.from(el.options).some(o => o.value === cur)) el.value = cur;
         else el.value = 'ALL';
         syncCustomSelectUI(id);
       });
       const minePic = document.getElementById('minePicSelect');
       if (minePic && !minePic.value) {
-        minePic.innerHTML = members.map(m => `<option value="${esc(m)}" m===currentUser.member?'selected':''>{esc(m)}</option>`).join('');
+        minePic.innerHTML = members.map(m => `<option value="${esc(m)}" ${m === currentUser.member ? 'selected' : ''}>${esc(m)}</option>`).join('');
       }
     }
 
@@ -3203,7 +3224,7 @@
         return true;
       });
       const missing = rows.filter(r => !r.done_when).length;
-      document.getElementById('defCountBadge').textContent = `rows.lengthitems{missing ? ` • ${missing} pending criteria` : ''}`;
+      document.getElementById('defCountBadge').textContent = `${rows.length} items${missing ? ` • ${missing} pending criteria` : ''}`;
       document.getElementById('definitionsTableBody').innerHTML = rows.map(d => `
         <tr class="hover:bg-slate-50/80">
           <td class="px-4 py-3 font-semibold text-slate-800">${esc(d.member)}</td>
@@ -3268,7 +3289,7 @@
       document.getElementById('ovKpiGrid').innerHTML = kpis.map(([l, v, red]) => `
         <div class="p-3.5 rounded-xl bg-slate-50/70 border border-slate-200/80">
           <div class="text-[10px] font-semibold uppercase tracking-wider text-slate-400">${l}</div>
-          <div class="font-mono text-2xl font-bold red&&v>0?'text-rose-600':'text-slate-900'mt-1">{v}</div>
+          <div class="font-mono text-2xl font-bold ${red && v > 0 ? 'text-rose-600' : 'text-slate-900'} mt-1">${v}</div>
         </div>
       `).join('');
 
@@ -3307,12 +3328,12 @@
             <td class="px-3 py-3 text-center font-mono text-slate-600">${routine}</td>
             <td class="px-3 py-3 text-center font-mono text-slate-600">${onDemand}</td>
             <td class="px-3 py-3 text-center"><span class="px-2 py-0.5 rounded-md bg-slate-100 font-mono font-bold text-slate-900">${rows.length}</span></td>
-            <td class="px-3 py-3 text-center"><span class="px-2 py-0.5 rounded-md comp>0?'bg-emerald-50text-emerald-700font-bold':'text-slate-400'font-mono">{comp}</span></td>
-            <td class="px-3 py-3 text-center"><span class="px-2 py-0.5 rounded-md prog>0?'bg-amber-50text-amber-800font-bold':'text-slate-400'font-mono">{prog}</span></td>
-            <td class="px-3 py-3 text-center font-mono paus>0?'text-indigo-700font-semibold':'text-slate-400'">{paus}</td>
+            <td class="px-3 py-3 text-center"><span class="px-2 py-0.5 rounded-md ${comp > 0 ? 'bg-emerald-50 text-emerald-700 font-bold' : 'text-slate-400'} font-mono">${comp}</span></td>
+            <td class="px-3 py-3 text-center"><span class="px-2 py-0.5 rounded-md ${prog > 0 ? 'bg-amber-50 text-amber-800 font-bold' : 'text-slate-400'} font-mono">${prog}</span></td>
+            <td class="px-3 py-3 text-center font-mono ${paus > 0 ? 'text-indigo-700 font-semibold' : 'text-slate-400'}">${paus}</td>
             <td class="px-3 py-3 text-center font-mono text-slate-500">${notS}</td>
-            <td class="px-3 py-3 text-center font-mono susp>0?'text-orange-700font-semibold':'text-slate-400'">{susp}</td>
-            <td class="px-3 py-3 text-center"><span class="px-2 py-0.5 rounded-md over>0?'bg-rose-50text-rose-700font-bold':'text-slate-300'font-mono">{over}</span></td>
+            <td class="px-3 py-3 text-center font-mono ${susp > 0 ? 'text-orange-700 font-semibold' : 'text-slate-400'}">${susp}</td>
+            <td class="px-3 py-3 text-center"><span class="px-2 py-0.5 rounded-md ${over > 0 ? 'bg-rose-50 text-rose-700 font-bold' : 'text-slate-300'} font-mono">${over}</span></td>
             <td class="px-5 py-3">
               <div class="flex items-center gap-2">
                 <div class="flex-1 h-2 rounded-full bg-slate-100 overflow-hidden border border-slate-200/70">
@@ -3336,7 +3357,7 @@
             <td class="px-4 py-2.5 font-semibold text-slate-800">${esc(r.pic)}</td>
             <td class="px-4 py-2.5 font-mono text-[11px] text-slate-500">${esc(r.start_date)}</td>
             <td class="px-4 py-2.5 font-mono text-[11px] text-slate-500">${esc(r.due_date)}</td>
-            <td class="px-4 py-2.5 text-[11px] font-medium origin==='Carriedover'?'text-[#1A64FF]':'text-slate-400'">{origin}</td>
+            <td class="px-4 py-2.5 text-[11px] font-medium ${origin === 'Carried over' ? 'text-[#1A64FF]' : 'text-slate-400'}">${origin}</td>
             <td class="px-4 py-2.5 text-slate-600">${esc(r.category)}</td>
             <td class="px-4 py-2.5 font-semibold text-slate-900">${esc(r.task)}</td>
             <td class="px-4 py-2.5">${getStatusBadge(r.status)}</td>
@@ -3378,7 +3399,7 @@
       [...allRealtimeLogs].sort((a, b) => Number(b.id) - Number(a.id)).forEach(r => {
         if (r.duration && r.duration !== '-') {
           const baseKey = makeTaskIdentityKey(r.pic, r.task, r.task_details);
-          const dateKey = `baseKey||{String(r.log_date || '').trim()}`;
+          const dateKey = `${baseKey}||${String(r.log_date || '').trim()}`;
           if (!durByDateMap[dateKey]) durByDateMap[dateKey] = r.duration;
           if (!durFallbackMap[baseKey]) durFallbackMap[baseKey] = r.duration;
         }
@@ -3396,7 +3417,7 @@
       }).map(t => {
         const stLower = String(t.status || '').trim().toLowerCase();
         const baseKey = makeTaskIdentityKey(t.pic, t.task, t.task_details);
-        const dateKey = `baseKey||{String(t.start_date || '').trim()}`;
+        const dateKey = `${baseKey}||${String(t.start_date || '').trim()}`;
         const resolvedDur = (stLower === 'not started')
           ? '-'
           : (durByDateMap[dateKey] || durFallbackMap[baseKey] || '-');
@@ -3462,6 +3483,9 @@
     function openEditDrawer(id) {
       const t = allTasks.find(x => x.id === id);
       if (!t) return;
+      if (!canEditTaskRecord(t)) {
+        return showToast('Read-only: Members cannot edit another PIC\'s task.', true);
+      }
       document.getElementById('editTaskId').value = t.id;
       document.getElementById('drawerTaskIdLabel').textContent = `ID #${t.id} • ${t.pic}`;
       document.getElementById('editTaskName').value = t.task;
@@ -3564,7 +3588,7 @@
       }
 
       const editBtn = document.getElementById('btnInspEditAction');
-      if (t) {
+      if (t && canEditTaskRecord(t)) {
         editBtn.classList.remove('hidden');
         editBtn.onclick = () => {
           closeDetailInspector();
@@ -3572,6 +3596,7 @@
         };
       } else {
         editBtn.classList.add('hidden');
+        editBtn.onclick = null;
       }
 
       document.getElementById('detailInspectorModal').classList.remove('hidden');
@@ -3592,6 +3617,10 @@
       e.preventDefault();
       const id = Number(document.getElementById('editTaskId').value);
       const prevTask = allTasks.find(x => x.id === id);
+      if (!prevTask || !canEditTaskRecord(prevTask)) {
+        closeEditDrawer();
+        return showToast('Read-only: Members cannot edit another PIC\'s task.', true);
+      }
       const status = document.getElementById('editTaskStatus').value;
       if (prevTask && prevTask.status !== 'Completed' && status === 'Completed') {
         if (!confirm('Are you sure you want to mark this task as Completed? This status cannot be reverted once saved.')) return;
@@ -3679,6 +3708,9 @@
 
     async function quickDeleteTask(id, taskName) {
       const t = allTasks.find(x => x.id === id);
+      if (!t || !canEditTaskRecord(t)) {
+        return showToast('Read-only: Members cannot delete another PIC\'s task.', true);
+      }
       if (t) {
         await sb.from('deleted_tasks').insert([{
           pic: t.pic, task: t.task, category: t.category, status: t.status, deleted_by: currentUser.email
@@ -3699,4 +3731,3 @@
   </script>
 </body>
 </html>
-
