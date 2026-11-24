@@ -149,7 +149,45 @@
       box-shadow: 0 4px 12px -2px rgba(15, 23, 42, 0.06);
     }
 
+    /* Suppress Google Translate Top Banner */
+    .goog-te-banner-frame,
+    .goog-te-banner-frame.skiptranslate,
+    iframe.goog-te-banner-frame,
+    iframe.skiptranslate,
+    .VIpgJd-ZVi9od-ORHb-OEVmcd,
+    .VIpgJd-ZVi9od-aZ2wEe-wOHMyf,
+    .VIpgJd-ZVi9od-l4eHX-hSRGPd,
+    #goog-gt-tt,
+    .goog-te-balloon-frame,
+    .goog-tooltip,
+    .goog-tooltip:hover {
+      display: none !important;
+      visibility: hidden !important;
+      height: 0px !important;
+      width: 0px !important;
+      max-height: 0px !important;
+      opacity: 0 !important;
+      pointer-events: none !important;
+      position: fixed !important;
+      top: -9999px !important;
+    }
+    body { top: 0px !important; position: static !important; }
+    .goog-text-highlight { background-color: transparent !important; box-shadow: none !important; }
+    #google_translate_element { display: none !important; }
   </style>
+  <div id="google_translate_element" style="display:none !important;"></div>
+  <script type="text/javascript">
+    function googleTranslateElementInit() {
+      if (window.google && google.translate) {
+        new google.translate.TranslateElement({
+          pageLanguage: 'en',
+          includedLanguages: 'en,es,ko',
+          autoDisplay: false
+        }, 'google_translate_element');
+      }
+    }
+  </script>
+  <script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
 </head>
 <body class="overflow-hidden h-screen flex text-slate-900">
 
@@ -169,6 +207,17 @@
         if (localStorage.getItem('ihfb_sb_email')) {
           document.getElementById('sessionBootLoader').classList.remove('hidden');
           document.getElementById('sessionBootLoader').classList.add('flex');
+          setTimeout(function() {
+            var b = document.getElementById('sessionBootLoader');
+            if (b && !b.classList.contains('hidden')) {
+              b.classList.add('hidden');
+              b.classList.remove('flex');
+              var l = document.getElementById('loginScreen');
+              if (l && document.getElementById('appMain').classList.contains('hidden')) {
+                l.classList.remove('hidden');
+              }
+            }
+          }, 5500);
         }
       } catch (e) {}
     })();
@@ -290,8 +339,8 @@
       </div>
     </div>
 
-    <!-- User Account Footer with Highlighted Role Pill -->
-    <div class="p-3.5 border-t border-slate-800/80 bg-black/30">
+    <!-- User Account Footer + Bottom-Left Language Switcher -->
+    <div class="p-3.5 border-t border-slate-800/80 bg-black/30 space-y-3">
       <div class="flex items-center gap-3 sb-center-on-collapse">
         <div id="userAvatar" class="w-9 h-9 rounded-lg bg-slate-800 border border-slate-700 text-slate-100 font-bold text-xs flex items-center justify-center shrink-0">U</div>
         <div class="min-w-0 flex-1 sb-hide-on-collapse">
@@ -303,6 +352,17 @@
         <button type="button" onclick="handleLogout()" title="Sign out" class="sb-hide-on-collapse text-slate-400 hover:text-white p-1.5 rounded-lg hover:bg-white/10 transition cursor-pointer">
           <i data-lucide="log-out" class="w-4 h-4"></i>
         </button>
+      </div>
+      <div class="pt-2 border-t border-slate-800/70 flex items-center justify-between gap-2 sb-center-on-collapse">
+        <div class="flex items-center gap-2 text-slate-400 sb-hide-on-collapse">
+          <i data-lucide="globe" class="w-3.5 h-3.5 text-[#60A5FA] shrink-0"></i>
+          <span class="text-[11px] font-medium">Language</span>
+        </div>
+        <select id="sidebarLangSelect" data-no-corp-dd="1" onchange="triggerPortalLanguage(this.value)" aria-label="Language" class="bg-slate-900 border border-slate-700/80 hover:border-slate-500 text-slate-200 text-[11px] font-semibold rounded-lg px-2 py-1 outline-none cursor-pointer">
+          <option value="en">English</option>
+          <option value="es">Español</option>
+          <option value="ko">한국어</option>
+        </select>
       </div>
     </div>
   </aside>
@@ -475,10 +535,15 @@
                     <span class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-white border border-slate-200 text-slate-500">08:00</span>
                   </div>
                   <p id="morningRuleText" class="text-[11.5px] text-slate-500 leading-relaxed">Remind the team via WhatsApp to log their daily tasks before starting operational activities.</p>
-                  <div id="waMorningBox" class="hidden pt-1">
-                    <button type="button" onclick="event.stopPropagation(); sendWhatsAppReminder('morning')" class="w-full py-1.5 rounded-lg bg-[#0A0A0B] hover:bg-slate-800 text-white text-[11px] font-semibold transition flex items-center justify-center gap-1.5 cursor-pointer">
-                      <i data-lucide="send" class="w-3 h-3 text-[#10B981]"></i>
-                      <span>Send WhatsApp Reminder</span>
+                  <div id="waMorningBox" class="hidden pt-1.5 flex items-center gap-2">
+                    <button type="button" onclick="event.stopPropagation(); sendWhatsAppReminder('morning')" title="Opens WhatsApp Desktop App or WhatsApp Web" class="flex-1 py-2 px-3 rounded-lg bg-[#0A0A0B] hover:bg-[#128C7E] text-white text-[11px] font-semibold shadow-2xs transition flex items-center justify-center gap-1.5 cursor-pointer">
+                      <i data-lucide="message-circle" class="w-3.5 h-3.5 text-[#25D366]"></i>
+                      <span>Send WhatsApp</span>
+                      <i data-lucide="arrow-up-right" class="w-3 h-3 opacity-75"></i>
+                    </button>
+                    <button type="button" onclick="event.stopPropagation(); copyWhatsAppReminder('morning', this)" title="Copy reminder message" class="px-2.5 py-2 rounded-lg border border-slate-200 bg-white hover:bg-slate-100 text-slate-600 hover:text-slate-900 text-[11px] font-semibold transition flex items-center gap-1 shrink-0 cursor-pointer">
+                      <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+                      <span>Copy</span>
                     </button>
                   </div>
                   <div id="memberMorningBtn" class="hidden pt-1">
@@ -498,10 +563,15 @@
                     <span class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-white border border-slate-200 text-slate-500">17:00</span>
                   </div>
                   <p id="eveningRuleText" class="text-[11.5px] text-slate-500 leading-relaxed">Remind the team via WhatsApp to update all task statuses and due dates prior to signing off.</p>
-                  <div id="waEveningBox" class="hidden pt-1">
-                    <button type="button" onclick="event.stopPropagation(); sendWhatsAppReminder('evening')" class="w-full py-1.5 rounded-lg bg-[#0A0A0B] hover:bg-slate-800 text-white text-[11px] font-semibold transition flex items-center justify-center gap-1.5 cursor-pointer">
-                      <i data-lucide="send" class="w-3 h-3 text-[#10B981]"></i>
-                      <span>Send WhatsApp Reminder</span>
+                  <div id="waEveningBox" class="hidden pt-1.5 flex items-center gap-2">
+                    <button type="button" onclick="event.stopPropagation(); sendWhatsAppReminder('evening')" title="Opens WhatsApp Desktop App or WhatsApp Web" class="flex-1 py-2 px-3 rounded-lg bg-[#0A0A0B] hover:bg-[#128C7E] text-white text-[11px] font-semibold shadow-2xs transition flex items-center justify-center gap-1.5 cursor-pointer">
+                      <i data-lucide="message-circle" class="w-3.5 h-3.5 text-[#25D366]"></i>
+                      <span>Send WhatsApp</span>
+                      <i data-lucide="arrow-up-right" class="w-3 h-3 opacity-75"></i>
+                    </button>
+                    <button type="button" onclick="event.stopPropagation(); copyWhatsAppReminder('evening', this)" title="Copy reminder message" class="px-2.5 py-2 rounded-lg border border-slate-200 bg-white hover:bg-slate-100 text-slate-600 hover:text-slate-900 text-[11px] font-semibold transition flex items-center gap-1 shrink-0 cursor-pointer">
+                      <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+                      <span>Copy</span>
                     </button>
                   </div>
                   <div id="memberEveningBtn" class="hidden pt-1">
@@ -1625,6 +1695,30 @@
     let allRealtimeLogs = [];
     let batchCardCounter = 0;
     let rtScopeAllTeam = true;
+    let rtSortField = 'default';
+    let rtSortDir = 'asc';
+
+    function toggleRtSort(field) {
+      if (rtSortField === field) {
+        if (rtSortDir === 'asc') {
+          rtSortDir = 'desc';
+        } else {
+          rtSortField = 'default';
+          rtSortDir = 'asc';
+        }
+      } else {
+        rtSortField = field;
+        rtSortDir = 'asc';
+      }
+      renderRealtimeView();
+    }
+
+    function getRtSortIndicator(field) {
+      if (rtSortField !== field) return '<span class="text-slate-300 ml-1 text-[10px]">↕</span>';
+      return rtSortDir === 'asc'
+        ? '<span class="text-[#1A64FF] ml-1 text-[10px] font-extrabold">▲</span>'
+        : '<span class="text-[#1A64FF] ml-1 text-[10px] font-extrabold">▼</span>';
+    }
     let rtSubscribed = false;
     let activeWrites = 0;
     const pendingStatusLocks = {};
@@ -1638,7 +1732,7 @@
 
     // ==================== CUSTOM CORPORATE DROPDOWN ENGINE ====================
     function enhanceCustomSelects() {
-      document.querySelectorAll('select').forEach(sel => {
+      document.querySelectorAll('select:not([data-no-corp-dd="1"])').forEach(sel => {
         if (sel.dataset.corpEnhanced === '1') {
           syncCustomSelectUI(sel.id);
           return;
@@ -1992,7 +2086,36 @@
     }
 
     // ==================== AUTHENTICATION ====================
+    function enforceNoTranslateBanner() {
+      document.body.style.top = '0px';
+      document.documentElement.style.top = '0px';
+      document.querySelectorAll('iframe.goog-te-banner-frame, .goog-te-banner-frame, .VIpgJd-ZVi9od-ORHb-OEVmcd').forEach(el => {
+        el.style.display = 'none';
+      });
+    }
+
+    function triggerPortalLanguage(lang) {
+      const sel = document.getElementById('sidebarLangSelect');
+      if (sel && sel.value !== lang) sel.value = lang;
+      localStorage.setItem('ihfb_tt_lang', lang);
+      const combo = document.querySelector('.goog-te-combo');
+      if (combo) {
+        combo.value = lang;
+        combo.dispatchEvent(new Event('change'));
+        setTimeout(enforceNoTranslateBanner, 150);
+        setTimeout(enforceNoTranslateBanner, 600);
+      } else {
+        document.cookie = `googtrans=/en/${lang}; path=/;`;
+        location.reload();
+      }
+    }
+
     window.addEventListener('DOMContentLoaded', async () => {
+      setInterval(enforceNoTranslateBanner, 450);
+      const savedLang = localStorage.getItem('ihfb_tt_lang') || 'en';
+      const langSel = document.getElementById('sidebarLangSelect');
+      if (langSel) langSel.value = savedLang;
+
       refreshIcons();
       const savedEmail = localStorage.getItem('ihfb_sb_email');
       if (savedEmail) {
@@ -2186,6 +2309,8 @@
       if (sEl) { sEl.value = 'ALL'; syncCustomSelectUI('rtFilterStatus'); }
       if (qEl) { qEl.value = ''; }
       rtScopeAllTeam = true;
+      rtSortField = 'default';
+      rtSortDir = 'asc';
       if (scopeBtn) { scopeBtn.textContent = 'Scope: All Team'; }
       if (shouldRender) renderRealtimeView();
     }
@@ -2246,12 +2371,41 @@
       renderRealtimeView();
     }
 
-    function sendWhatsAppReminder(mode) {
+    function buildWhatsAppReminderText(mode) {
       const url = window.location.href;
-      const msg = mode === 'morning'
+      return mode === 'morning'
         ? `*Please remember to record your tasks and update their status in the Task Tracker.*\n${url}`
         : `*Please remember to update your task status before leaving work.*\n${url}`;
-      window.open('https://web.whatsapp.com/send?text=' + encodeURIComponent(msg), '_blank');
+    }
+
+    function sendWhatsAppReminder(mode) {
+      const msg = buildWhatsAppReminderText(mode);
+      // api.whatsapp.com prompts WhatsApp Desktop App if installed, or opens WhatsApp Web seamlessly
+      window.open('https://api.whatsapp.com/send?text=' + encodeURIComponent(msg), '_blank', 'noopener');
+    }
+
+    async function copyWhatsAppReminder(mode, btnEl) {
+      const msg = buildWhatsAppReminderText(mode);
+      try {
+        await navigator.clipboard.writeText(msg);
+      } catch (e) {
+        const ta = document.createElement('textarea');
+        ta.value = msg;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+      }
+      if (btnEl) {
+        const origHtml = btnEl.innerHTML;
+        btnEl.innerHTML = '<i data-lucide="check" class="w-3.5 h-3.5 text-emerald-600"></i><span class="text-emerald-700">Copied</span>';
+        refreshIcons();
+        setTimeout(() => {
+          btnEl.innerHTML = origHtml;
+          refreshIcons();
+        }, 1800);
+      }
+      showToast('Reminder copied to clipboard');
     }
 
     function handleRuleCardClick(mode) {
@@ -2273,8 +2427,8 @@
         }
       });
 
-      const members = currentUser.isSupervisor
-        ? [...new Set(allAccess.map(a => String(a.member || '').trim()).filter(Boolean))].sort()
+      const rawMembers = currentUser.isSupervisor
+        ? [...new Set(allAccess.map(a => String(a.member || '').trim()).filter(Boolean))]
         : [currentUser.member];
 
       document.getElementById('homeWorkloadTitle').innerHTML = currentUser.isSupervisor
@@ -2282,8 +2436,7 @@
         : '<i data-lucide="user-check" class="w-4 h-4 text-blue-700"></i><span>My Active Sessions</span>';
 
       let totalInProg = 0;
-      const grid = document.getElementById('homeTeamWorkloadGrid');
-      grid.innerHTML = members.map(m => {
+      const memberStats = rawMembers.map(m => {
         const open = allTasks.filter(t => t.pic === m && t.status !== 'Completed' && t.status !== 'Cancelled');
         let count = 0;
         open.forEach(t => {
@@ -2292,6 +2445,14 @@
           if (eff === 'in progress' || eff === 'start') count++;
         });
         totalInProg += count;
+        return { member: m, count };
+      }).sort((a, b) => {
+        if (b.count !== a.count) return b.count - a.count;
+        return a.member.localeCompare(b.member);
+      });
+
+      const grid = document.getElementById('homeTeamWorkloadGrid');
+      grid.innerHTML = memberStats.map(({ member: m, count }) => {
         const activeStyle = count > 0 ? 'border-amber-300 bg-amber-50/35' : 'border-slate-200 bg-white';
         const pillStyle = count > 0 ? 'bg-amber-50 text-amber-800 border-amber-300' : 'bg-slate-100 text-slate-500 border-slate-200';
         return `
@@ -2682,19 +2843,25 @@
         String(d.member || '').trim().toLowerCase() === pic.toLowerCase() &&
         !hiddenRoutines[`${pic}||${d.task}`]
       );
-      const routines = picDefs.filter(d => (d.category || 'Routine') === 'Routine');
-      const onDemands = picDefs.filter(d => d.category === 'On Demand');
+      const routines = picDefs.filter(d => String(d.category || 'Routine').trim().toLowerCase() !== 'on demand');
+      const onDemands = picDefs.filter(d => String(d.category || '').trim().toLowerCase() === 'on demand');
 
       const rSel = document.getElementById('bRoutineSel-' + id);
       if (rSel) {
         rSel.innerHTML = '<option value="">Select routine...</option>' +
-          routines.map(r => `<option value="${esc(r.task)}">${esc(r.task)}</option>`).join('');
+          routines.map(r => {
+            const tVal = String(r.task || '').trim();
+            return `<option value="${esc(tVal)}">${esc(tVal)}</option>`;
+          }).join('');
       }
 
       const oSel = document.getElementById('bOnDemandSel-' + id);
       if (oSel) {
         oSel.innerHTML = '<option value="">Select assignment...</option>' +
-          onDemands.map(r => `<option value="${esc(r.task)}">${esc(r.task)}</option>`).join('');
+          onDemands.map(r => {
+            const tVal = String(r.task || '').trim();
+            return `<option value="${esc(tVal)}">${esc(tVal)}</option>`;
+          }).join('');
       }
       enhanceCustomSelects();
     }
@@ -2719,7 +2886,7 @@
     function onBatchRoutineChange(id) {
       const pic = getActiveMinePic();
       const val = document.getElementById('bRoutineSel-' + id).value;
-      const def = allDefinitions.find(d => String(d.member).trim().toLowerCase() === pic.toLowerCase() && d.task === val);
+      const def = allDefinitions.find(d => String(d.member || '').trim().toLowerCase() === pic.toLowerCase() && String(d.task || '').trim().toLowerCase() === String(val || '').trim().toLowerCase());
       applyBatchDefinitionPreview(id, def);
       if (def) {
         if (def.area) {
@@ -2735,7 +2902,7 @@
     function onBatchOnDemandChange(id) {
       const pic = getActiveMinePic();
       const val = document.getElementById('bOnDemandSel-' + id).value;
-      const def = allDefinitions.find(d => String(d.member).trim().toLowerCase() === pic.toLowerCase() && d.task === val);
+      const def = allDefinitions.find(d => String(d.member || '').trim().toLowerCase() === pic.toLowerCase() && String(d.task || '').trim().toLowerCase() === String(val || '').trim().toLowerCase());
       applyBatchDefinitionPreview(id, def);
       if (def) {
         if (def.area) {
@@ -2834,7 +3001,7 @@
         document.getElementById('mgmtInvolvesInput').value = '';
         document.getElementById('mgmtDoneWhenInput').value = '';
       } else {
-        const def = allDefinitions.find(d => String(d.member).trim().toLowerCase() === pic.toLowerCase() && d.task === val);
+        const def = allDefinitions.find(d => String(d.member || '').trim().toLowerCase() === pic.toLowerCase() && String(d.task || '').trim().toLowerCase() === String(val || '').trim().toLowerCase());
         if (def) {
           document.getElementById('mgmtTaskNameInput').value = def.task;
           document.getElementById('mgmtCategoryInput').value = def.category || 'Routine';
@@ -3088,6 +3255,33 @@
         return true;
       });
 
+      if (rtSortField !== 'default') {
+        const mult = rtSortDir === 'asc' ? 1 : -1;
+        filteredLogs.sort((a, b) => {
+          if (rtSortField === 'pic') {
+            return mult * String(a.pic || '').localeCompare(String(b.pic || ''));
+          }
+          if (rtSortField === 'task') {
+            return mult * String(a.task || '').localeCompare(String(b.task || ''));
+          }
+          if (rtSortField === 'details') {
+            return mult * String(a.details || '').localeCompare(String(b.details || ''));
+          }
+          if (rtSortField === 'status') {
+            return mult * String(a.action || '').localeCompare(String(b.action || ''));
+          }
+          if (rtSortField === 'start_time') {
+            const secA = parseTimeSeconds(a.start_time);
+            const secB = parseTimeSeconds(b.start_time);
+            if (secA === -1 && secB === -1) return 0;
+            if (secA === -1) return 1;
+            if (secB === -1) return -1;
+            return mult * (secA - secB);
+          }
+          return 0;
+        });
+      }
+
       let cCan = 0, cSus = 0, cPau = 0, cNot = 0, cInp = 0, cCom = 0;
       filteredLogs.forEach(r => {
         const a = String(r.action || '').toLowerCase();
@@ -3180,8 +3374,15 @@
           </div>`;
       } else {
         if (showLeftCards) {
-          // SPLIT-VIEW MODE: Strictly aligned grid columns inside each row so Category/Division, Details, Status, and Start Time line up cleanly across every single card!
+          // SPLIT-VIEW MODE: Clean layout without letter icons + quick sort controls
           streamBox.innerHTML =
+            `<div class="flex flex-wrap items-center gap-1.5 px-2 py-2 mb-2 text-[11px] font-bold uppercase tracking-wider text-slate-500 bg-slate-50/90 rounded-lg border border-slate-200/70">
+              <span class="text-[10px] text-slate-400 mr-1">Sort:</span>
+              <button type="button" onclick="toggleRtSort('pic')" class="px-2 py-0.5 rounded hover:bg-white cursor-pointer">PIC ${getRtSortIndicator('pic')}</button>
+              <button type="button" onclick="toggleRtSort('task')" class="px-2 py-0.5 rounded hover:bg-white cursor-pointer">Task ${getRtSortIndicator('task')}</button>
+              <button type="button" onclick="toggleRtSort('status')" class="px-2 py-0.5 rounded hover:bg-white cursor-pointer">Status ${getRtSortIndicator('status')}</button>
+              <button type="button" onclick="toggleRtSort('start_time')" class="px-2 py-0.5 rounded hover:bg-white cursor-pointer">Start Time ${getRtSortIndicator('start_time')}</button>
+            </div>` +
             `<div class="space-y-2.5 my-1">` +
             filteredLogs.map(l => {
               const act = String(l.action || '').toLowerCase();
@@ -3192,14 +3393,11 @@
 
               return `
                 <div onclick="openDetailInspectorById(${l.id}, '${esc(l.action)}', '${esc(l.start_time || '-')}')" class="p-3.5 rounded-xl border ${rowHighlight} transition cursor-pointer group space-y-2.5">
-                  <!-- Top Row: Fixed-proportion alignment for Avatar + Task/PIC | Status | Start Time -->
-                  <div class="grid grid-cols-[28px_minmax(0,1fr)_auto] items-center gap-3">
-                    <span class="w-7 h-7 rounded-lg bg-slate-100 border border-slate-200 text-slate-700 font-bold text-xs flex items-center justify-center shrink-0">
-                      ${esc(String(l.pic || 'U').charAt(0).toUpperCase())}
-                    </span>
+                  <!-- Top Row: Clean Task & PIC name (without letter avatar) | Status | Start Time -->
+                  <div class="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
                     <div class="min-w-0">
                       <div class="text-[13px] font-bold text-slate-900 group-hover:text-[#1A64FF] transition truncate" title="${esc(l.task)}">${esc(l.task)}</div>
-                      <div class="text-[11.5px] font-medium text-slate-500 truncate">${esc(l.pic)}</div>
+                      <div class="text-[11.5px] font-semibold text-slate-600 truncate">${esc(l.pic)}</div>
                     </div>
                     <div class="flex items-center gap-2 shrink-0">
                       ${getStatusBadge(l.action)}
@@ -3223,15 +3421,15 @@
             }).join('') +
           `</div>`;
         } else {
-          // FULL-WIDTH MODE (All Team): Clean 5-column aligned layout
-          const gridColsClass = 'lg:grid-cols-[minmax(175px,1.05fr)_minmax(195px,1.25fr)_minmax(160px,1.4fr)_112px_102px]';
+          // FULL-WIDTH MODE (All Team): Clean 5-column aligned layout with Sortable Headers & Direct PIC Names (no letter icons)
+          const gridColsClass = 'lg:grid-cols-[minmax(165px,1fr)_minmax(200px,1.25fr)_minmax(165px,1.45fr)_112px_106px]';
           streamBox.innerHTML =
-            `<div class="hidden lg:grid ${gridColsClass} items-center gap-3.5 px-4 py-2.5 mb-2 text-[11px] font-bold uppercase tracking-wider text-slate-600 bg-slate-50/90 rounded-lg border border-slate-200/70">
-              <div>Responsible (PIC)</div>
-              <div>Task & Division</div>
-              <div>Deliverable Details</div>
-              <div class="text-center">Status</div>
-              <div class="text-center">Start Time</div>
+            `<div class="hidden lg:grid ${gridColsClass} items-center gap-3.5 px-4 py-2.5 mb-2 text-[11px] font-bold uppercase tracking-wider text-slate-600 bg-slate-50/90 rounded-lg border border-slate-200/70 select-none">
+              <button type="button" onclick="toggleRtSort('pic')" class="text-left hover:text-[#1A64FF] transition flex items-center cursor-pointer">Responsible (PIC) ${getRtSortIndicator('pic')}</button>
+              <button type="button" onclick="toggleRtSort('task')" class="text-left hover:text-[#1A64FF] transition flex items-center cursor-pointer">Task & Division ${getRtSortIndicator('task')}</button>
+              <button type="button" onclick="toggleRtSort('details')" class="text-left hover:text-[#1A64FF] transition flex items-center cursor-pointer">Deliverable Details ${getRtSortIndicator('details')}</button>
+              <button type="button" onclick="toggleRtSort('status')" class="justify-center hover:text-[#1A64FF] transition flex items-center cursor-pointer">Status ${getRtSortIndicator('status')}</button>
+              <button type="button" onclick="toggleRtSort('start_time')" class="justify-center hover:text-[#1A64FF] transition flex items-center cursor-pointer">Start Time ${getRtSortIndicator('start_time')}</button>
             </div>` +
             `<div class="space-y-2.5 my-1">` +
             filteredLogs.map(l => {
@@ -3243,11 +3441,8 @@
 
               return `
                 <div onclick="openDetailInspectorById(${l.id}, '${esc(l.action)}', '${esc(l.start_time || '-')}')" class="px-4 py-3 rounded-xl border ${rowHighlight} transition cursor-pointer group grid grid-cols-1 ${gridColsClass} items-center gap-3.5">
-                  <div class="min-w-0 flex items-center gap-2.5">
-                    <span class="w-7 h-7 rounded-lg bg-slate-100 border border-slate-200 text-slate-700 font-bold text-xs flex items-center justify-center shrink-0">
-                      ${esc(String(l.pic || 'U').charAt(0).toUpperCase())}
-                    </span>
-                    <span class="text-[13px] font-semibold text-slate-800 truncate block" title="${esc(l.pic)}">${esc(l.pic)}</span>
+                  <div class="min-w-0">
+                    <span class="text-[13px] font-semibold text-slate-900 truncate block" title="${esc(l.pic)}">${esc(l.pic)}</span>
                   </div>
 
                   <div class="min-w-0">
