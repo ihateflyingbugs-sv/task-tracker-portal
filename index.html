@@ -1782,6 +1782,196 @@
       return `${secs}s`;
     }
 
+    function parseDurationSeconds(durStr) {
+      if (!durStr || durStr === '-') return 0;
+      const s = String(durStr).trim();
+      let total = 0;
+      const hMatch = s.match(/(\d+)\s*h/i);
+      const mMatch = s.match(/(\d+)\s*m/i);
+      const sMatch = s.match(/(\d+)\s*s/i);
+      if (hMatch || mMatch || sMatch) {
+        if (hMatch) total += Number(hMatch[1]) * 3600;
+        if (mMatch) total += Number(mMatch[1]) * 60;
+        if (sMatch) total += Number(sMatch[1]);
+        return total;
+      }
+      const colonMatch = s.match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?$/);
+      if (colonMatch) {
+        return (Number(colonMatch[1]) * 3600) + (Number(colonMatch[2]) * 60) + Number(colonMatch[3] || 0);
+      }
+      return 0;
+    }
+
+    function isRunningStatus(st) {
+      const s = String(st || '').trim().toLowerCase();
+      return s === 'in progress' || s === 'start';
+    }
+
+    function isValidClockStr(tStr) {
+      return Boolean(tStr && /^\d{1,2}:\d{2}(:\d{2})?$/.test(String(tStr).trim()));
+    }
+
+    function computeMultiDayTaskDuration(task) {
+      if (!task) return '-';
+      const stLower = String(task.status || '').trim().toLowerCase();
+      if (stLower === 'not started') return '-';
+
+      const today = todayISO();
+      const baseKey = makeTaskIdentityKey(task.pic, task.task, task.task_details);
+      const startBound = String(task.start_date || '').trim().slice(0, 10);
+      const dueBound = String(task.due_date || '').trim().slice(0, 10);
+      const upperBound = (dueBound && dueBound > today) ? dueBound : today;
+
+      // Group today's & historical task_log entries of same identity by start_date to preserve 1-to-1 ordinal pairing
+      const matchingRt = allRealtimeLogs
+        .filter(r => {
+          if (makeTaskIdentityKey(r.pic, r.task, r.task_details) !== baseKey) return false;
+          const lDate = String(r.log_date || '').trim().slice(0, 10);
+          if (!lDate) return false;
+          if (startBound && lDate < startBound) return false;
+          if (upperBound && lDate > upperBound) return false;
+          return true;
+        })
+        .sort((a, b) => Number(a.id) - Number(b.id));
+
+      // Group matching realtime_log rows by log_date and pick the ordinal slot for this task_log
+      const sameTasksByStart = allTasks
+        .filter(x => makeTaskIdentityKey(x.pic, x.task, x.task_details) === baseKey && String(x.start_date || '').slice(0, 10) === startBound)
+        .sort((a, b) => Number(a.id) - Number(b.id));
+      const ordinalIdx = Math.max(0, sameTasksByStart.findIndex(x => x.id === task.id));
+
+      const rtByDate = {};
+      matchingRt.forEach(r => {
+        const d = String(r.log_date || '').trim().slice(0, 10);
+        if (!rtByDate[d]) rtByDate[d] = [];
+        rtByDate[d].push(r);
+      });
+
+      let totalAccumSecs = 0;
+      let hasAnyLog = false;
+
+      Object.keys(rtByDate).sort().forEach(dStr => {
+        const listForDay = rtByDate[dStr];
+        const chosen = listForDay[ordinalIdx] || listForDay[0];
+        if (!chosen) return;
+        hasAnyLog = true;
+        totalAccumSecs += parseDurationSeconds(chosen.duration);
+
+        // If this row is currently running In progress today, include active live elapsed segment
+        if (dStr === today && isRunningStatus(task.status) && isRunningStatus(chosen.action)) {
+          const segStartClock = isValidClockStr(chosen.end_time) ? chosen.end_time : (isValidClockStr(chosen.start_time) ? chosen.start_time : null);
+          if (segStartClock) {
+            const segMs = new Date(`${today}T${segStartClock}`).getTime();
+            if (!isNaN(segMs)) {
+              totalAccumSecs += Math.max(0, Math.round((Date.now() - segMs) / 1000));
+            }
+          }
+        }
+      });
+
+      if (totalAccumSecs > 0) return formatDurationHMS(totalAccumSecs);
+      if (hasAnyLog && isRunningStatus(task.status)) return '1s';
+      return '-';
+    }
+
+    async function syncRealtimeClockTransition(task, prevStatus, newStatus, updatedCause, overrideFields = null) {
+      const today = todayISO();
+      const timeStr = timeNowStr();
+      const prevIdentity = makeTaskIdentityKey(task.pic, task.task, task.task_details);
+
+      const sameIdentityTasksToday = allTasks
+        .filter(x => (x.start_date === today || x.status !== 'Not Started') && makeTaskIdentityKey(x.pic, x.task, x.task_details) === prevIdentity)
+        .sort((a, b) => Number(a.id) - Number(b.id));
+      const taskOrdinal = Math.max(0, sameIdentityTasksToday.findIndex(x => x.id === task.id));
+
+      const matchingRtTodayAsc = allRealtimeLogs
+        .filter(l => l.log_date === today && makeTaskIdentityKey(l.pic, l.task, l.task_details) === prevIdentity)
+        .sort((a, b) => Number(a.id) - Number(b.id));
+      const existingTodayLog = matchingRtTodayAsc[taskOrdinal] || null;
+
+      const wasRunning = isRunningStatus(prevStatus);
+      const willRun = isRunningStatus(newStatus);
+
+      const baseMeta = {
+        task: overrideFields ? overrideFields.task : task.task,
+        category: overrideFields ? overrideFields.category : task.category,
+        task_details: overrideFields ? overrideFields.task_details : (task.task_details || ''),
+        area: overrideFields ? overrideFields.area : (task.area || 'Operations'),
+        cause: updatedCause,
+        link_1: overrideFields ? overrideFields.link_1 : (task.link_1 || ''),
+        link_2: overrideFields ? overrideFields.link_2 : (task.link_2 || ''),
+        link_3: overrideFields ? overrideFields.link_3 : (task.link_3 || '')
+      };
+
+      if (existingTodayLog) {
+        const prevAccumSecs = parseDurationSeconds(existingTodayLog.duration);
+        let newTotalSecs = prevAccumSecs;
+
+        // Stop the clock ONLY if it was actively running ("In progress") and is now transitioning to Paused / Suspend / Completed / Cancelled
+        if (wasRunning && !willRun) {
+          const segStartClock = isValidClockStr(existingTodayLog.end_time)
+            ? existingTodayLog.end_time
+            : (isValidClockStr(existingTodayLog.start_time) ? existingTodayLog.start_time : null);
+          if (segStartClock) {
+            const startMs = new Date(`${today}T${segStartClock}`).getTime();
+            if (!isNaN(startMs)) {
+              const elapsedSecs = Math.max(1, Math.round((Date.now() - startMs) / 1000));
+              newTotalSecs = prevAccumSecs + elapsedSecs;
+            }
+          }
+        } else if (!wasRunning && String(newStatus).toLowerCase() === 'completed' && prevAccumSecs === 0) {
+          // Direct Not Started -> Completed fallback
+          const createdMs = task.created_at ? new Date(task.created_at).getTime() : NaN;
+          newTotalSecs = !isNaN(createdMs) ? Math.max(1, Math.round((Date.now() - createdMs) / 1000)) : 1;
+        }
+
+        const preservedStart = isValidClockStr(existingTodayLog.start_time)
+          ? existingTodayLog.start_time
+          : (newStatus === 'Not Started' ? '-' : timeStr);
+
+        // When resuming In progress, store current segment start timestamp in end_time so next pause adds only the new active interval
+        let nextEndTime = existingTodayLog.end_time || '-';
+        if (willRun && !wasRunning) {
+          nextEndTime = timeStr;
+        } else if (!willRun && newStatus !== 'Not Started') {
+          nextEndTime = timeStr;
+        }
+
+        const nextDuration = newTotalSecs > 0 ? formatDurationHMS(newTotalSecs) : (existingTodayLog.duration || '-');
+
+        const rtPayload = Object.assign({}, baseMeta, {
+          action: newStatus,
+          start_time: preservedStart,
+          end_time: nextEndTime,
+          duration: nextDuration
+        });
+        Object.assign(existingTodayLog, rtPayload);
+        const { error: rtUpdErr } = await sb.from('realtime_log').update(rtPayload).eq('id', existingTodayLog.id);
+        if (rtUpdErr) console.error('realtime_log update error:', rtUpdErr);
+      } else if (newStatus !== 'Not Started') {
+        let initialDuration = '-';
+        if (String(newStatus).toLowerCase() === 'completed') {
+          const createdMs = task.created_at ? new Date(task.created_at).getTime() : NaN;
+          initialDuration = !isNaN(createdMs) ? formatDurationHMS(Math.max(1, Math.round((Date.now() - createdMs) / 1000))) : '1s';
+        }
+        const newRtRow = Object.assign({}, baseMeta, {
+          pic: task.pic,
+          action: newStatus,
+          start_time: timeStr,
+          end_time: timeStr,
+          duration: initialDuration,
+          log_date: today
+        });
+        const { data: insertedRt, error: rtInsErr } = await sb.from('realtime_log').insert([newRtRow]).select().maybeSingle();
+        if (rtInsErr) {
+          console.error('realtime_log insert error:', rtInsErr);
+          showToast('Warning: realtime_log sync issue: ' + rtInsErr.message, true);
+        } else if (insertedRt) {
+          allRealtimeLogs.unshift(insertedRt);
+        }
+      }
+    }
+
     function calcOverdue(dueStr, status) {
       if (!dueStr || status === 'Completed' || String(status || '').toLowerCase() === 'cancelled') return '';
       const parts = String(dueStr).split('-');
@@ -3168,72 +3358,7 @@
           return showToast('Error saving status: ' + taskErr.message, true);
         }
 
-        const targetIdentity = makeTaskIdentityKey(task.pic, task.task, task.task_details);
-        // Find nth ordinal position of this task among today's matching task_log entries so independent tasks never overwrite each other
-        const sameIdentityTasksToday = allTasks
-          .filter(x => (x.start_date === today || x.status !== 'Not Started') && makeTaskIdentityKey(x.pic, x.task, x.task_details) === targetIdentity)
-          .sort((a, b) => Number(a.id) - Number(b.id));
-        const taskOrdinal = Math.max(0, sameIdentityTasksToday.findIndex(x => x.id === task.id));
-
-        const matchingRtTodayAsc = allRealtimeLogs
-          .filter(l => l.log_date === today && makeTaskIdentityKey(l.pic, l.task, l.task_details) === targetIdentity)
-          .sort((a, b) => Number(a.id) - Number(b.id));
-        const existingTodayLog = matchingRtTodayAsc[taskOrdinal] || null;
-
-        if (existingTodayLog) {
-          let duration = existingTodayLog.duration;
-          if ((newStatus === 'Completed' || newStatus === 'Paused') && existingTodayLog.start_time && existingTodayLog.start_time !== '-') {
-            const startMs = new Date(`${today}T${existingTodayLog.start_time}`).getTime();
-            if (!isNaN(startMs)) {
-              const elapsedSecs = Math.max(1, Math.round((Date.now() - startMs) / 1000));
-              duration = formatDurationHMS(elapsedSecs);
-            }
-          }
-          const preservedStart = (existingTodayLog.start_time && existingTodayLog.start_time !== '-') ? existingTodayLog.start_time : timeStr;
-          const rtPayload = {
-            action: newStatus,
-            start_time: preservedStart,
-            end_time: (newStatus === 'Completed' || newStatus === 'Paused') ? timeStr : existingTodayLog.end_time,
-            duration: duration,
-            cause: updatedCause
-          };
-          Object.assign(existingTodayLog, rtPayload);
-          const { error: rtUpdErr } = await sb.from('realtime_log').update(rtPayload).eq('id', existingTodayLog.id);
-          if (rtUpdErr) console.error('realtime_log update error:', rtUpdErr);
-        } else {
-          let initialDuration = '-';
-          if (newStatus === 'Completed') {
-            const createdMs = task.created_at ? new Date(task.created_at).getTime() : NaN;
-            if (!isNaN(createdMs)) {
-              initialDuration = formatDurationHMS(Math.max(1, Math.round((Date.now() - createdMs) / 1000)));
-            } else {
-              initialDuration = '1s';
-            }
-          }
-          const newRtRow = {
-            pic: task.pic,
-            task: task.task,
-            category: task.category,
-            task_details: task.task_details || '',
-            action: newStatus,
-            start_time: timeStr,
-            end_time: (newStatus === 'Completed' || newStatus === 'Paused') ? timeStr : '-',
-            duration: initialDuration,
-            log_date: today,
-            cause: updatedCause,
-            area: task.area || 'Operations',
-            link_1: task.link_1 || '',
-            link_2: task.link_2 || '',
-            link_3: task.link_3 || ''
-          };
-          const { data: insertedRt, error: rtInsErr } = await sb.from('realtime_log').insert([newRtRow]).select().maybeSingle();
-          if (rtInsErr) {
-            console.error('realtime_log insert error:', rtInsErr);
-            showToast('Warning: realtime_log sync issue: ' + rtInsErr.message, true);
-          } else if (insertedRt) {
-            allRealtimeLogs.unshift(insertedRt);
-          }
-        }
+        await syncRealtimeClockTransition(task, prevStatus, newStatus, updatedCause);
 
         showToast(`Status saved: ${newStatus}`);
       } finally {
@@ -3451,17 +3576,6 @@
       const q = document.getElementById('histSearchInput').value.trim().toLowerCase();
       const sFilter = document.getElementById('histStatusFilter').value;
 
-      const durByDateMap = {};
-      const durFallbackMap = {};
-      [...allRealtimeLogs].sort((a, b) => Number(b.id) - Number(a.id)).forEach(r => {
-        if (r.duration && r.duration !== '-') {
-          const baseKey = makeTaskIdentityKey(r.pic, r.task, r.task_details);
-          const dateKey = `${baseKey}||${String(r.log_date || '').trim()}`;
-          if (!durByDateMap[dateKey]) durByDateMap[dateKey] = r.duration;
-          if (!durFallbackMap[baseKey]) durFallbackMap[baseKey] = r.duration;
-        }
-      });
-
       return allTasks.filter(t => {
         if (from && t.start_date < from) return false;
         if (to && t.start_date > to) return false;
@@ -3472,15 +3586,9 @@
         if (q && !(`${t.task} ${t.task_details}`).toLowerCase().includes(q)) return false;
         return true;
       }).map(t => {
-        const stLower = String(t.status || '').trim().toLowerCase();
-        const baseKey = makeTaskIdentityKey(t.pic, t.task, t.task_details);
-        const dateKey = `${baseKey}||${String(t.start_date || '').trim()}`;
-        const resolvedDur = (stLower === 'not started')
-          ? '-'
-          : (durByDateMap[dateKey] || durFallbackMap[baseKey] || '-');
         return Object.assign({}, t, {
           overdue_calc: calcOverdue(t.due_date, t.status),
-          duration_calc: resolvedDur
+          duration_calc: computeMultiDayTaskDuration(t)
         });
       });
     }
@@ -3525,7 +3633,7 @@
 
     function exportTodayCSV() {
       const today = todayISO();
-      downloadCSVFile(allTasks.filter(t => t.start_date === today), `Task_History_Today_${today}.csv`);
+      downloadCSVFile(allTasks.filter(t => t.start_date === today).map(t => Object.assign({}, t, { duration_calc: computeMultiDayTaskDuration(t) })), `Task_History_Today_${today}.csv`);
     }
 
     function exportFilteredCSV() {
@@ -3533,7 +3641,7 @@
     }
 
     function exportFullHistoryCSV() {
-      downloadCSVFile(allTasks, `Task_History_Full_${todayISO()}.csv`);
+      downloadCSVFile(allTasks.map(t => Object.assign({}, t, { duration_calc: computeMultiDayTaskDuration(t) })), `Task_History_Full_${todayISO()}.csv`);
     }
 
     // ==================== SLIDE-OVER DRAWER ====================
@@ -3622,7 +3730,8 @@
       document.getElementById('inspMember').textContent = pic;
       document.getElementById('inspArea').textContent = area;
       document.getElementById('inspStatus').innerHTML = getStatusBadge(status);
-      document.getElementById('inspStartTime').textContent = start;
+      const totalAccDur = computeMultiDayTaskDuration(t);
+      document.getElementById('inspStartTime').textContent = (totalAccDur && totalAccDur !== '-') ? `${start}  •  Accumulated: ${totalAccDur}` : start;
       const critEl = document.getElementById('inspCriteriaBox');
       if (critEl) {
         critEl.textContent = criteriaText;
@@ -3708,43 +3817,7 @@
         }
 
         if (prevTask) {
-          const today = todayISO();
-          const prevIdentity = makeTaskIdentityKey(prevTask.pic, prevTask.task, prevTask.task_details);
-          const sameIdentityTasksToday = allTasks
-            .filter(x => (x.start_date === today || x.status !== 'Not Started') && makeTaskIdentityKey(x.pic, x.task, x.task_details) === prevIdentity)
-            .sort((a, b) => Number(a.id) - Number(b.id));
-          const taskOrdinal = Math.max(0, sameIdentityTasksToday.findIndex(x => x.id === prevTask.id));
-
-          const matchingRtTodayAsc = allRealtimeLogs
-            .filter(l => l.log_date === today && makeTaskIdentityKey(l.pic, l.task, l.task_details) === prevIdentity)
-            .sort((a, b) => Number(a.id) - Number(b.id));
-          const existingTodayLog = matchingRtTodayAsc[taskOrdinal] || null;
-
-          const rtUpdates = {
-            task: updates.task,
-            category: updates.category,
-            action: status,
-            task_details: updates.task_details,
-            area: updates.area,
-            cause: updates.cause_of_delay,
-            link_1: updates.link_1,
-            link_2: updates.link_2,
-            link_3: updates.link_3
-          };
-          if (existingTodayLog) {
-            if ((!existingTodayLog.start_time || existingTodayLog.start_time === '-') && status !== 'Not Started') {
-              rtUpdates.start_time = timeNowStr();
-            }
-            await sb.from('realtime_log').update(rtUpdates).eq('id', existingTodayLog.id);
-          } else if (status !== 'Not Started') {
-            await sb.from('realtime_log').insert([Object.assign({
-              pic: prevTask.pic,
-              start_time: timeNowStr(),
-              end_time: (status === 'Completed' || status === 'Paused') ? timeNowStr() : '-',
-              duration: '-',
-              log_date: today
-            }, rtUpdates)]);
-          }
+          await syncRealtimeClockTransition(prevTask, prevTask.status, status, updates.cause_of_delay, updates);
         }
       } finally {
         activeWrites = Math.max(0, activeWrites - 1);
