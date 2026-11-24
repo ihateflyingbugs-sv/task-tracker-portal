@@ -2226,40 +2226,91 @@
       onMgmtDefSelectChange();
       enhanceCustomSelects();
 
-      // Last 7 days table: ALWAYS keeps all tasks from the last 7 days regardless of status (Completed, Cancelled, Suspend, Paused, In progress, Not Started)
-      const from7 = shiftDaysISO(-7);
+      // Rolling Last 7 Days Log sourced from realtime_log (plus any Not Started tasks started in the last 7 days), regardless of status
+      const today7 = todayISO();
+      const from7 = shiftDaysISO(-6);
       const picNorm7 = String(pic || '').trim().toLowerCase();
-      const recent = allTasks.filter(t => {
-        if (String(t.pic || '').trim().toLowerCase() !== picNorm7) return false;
-        const sDate = String(t.start_date || '').trim().slice(0, 10);
-        const dDate = String(t.due_date || '').trim().slice(0, 10);
-        const cDate = String(t.created_at || '').trim().slice(0, 10);
-        return (sDate && sDate >= from7) || (dDate && dDate >= from7) || (cDate && cDate >= from7);
-      }).sort((a, b) => {
-        const dA = String(a.start_date || '').slice(0, 10);
-        const dB = String(b.start_date || '').slice(0, 10);
-        if (dB !== dA) return dB.localeCompare(dA);
-        return Number(b.id) - Number(a.id);
+
+      // Build 1-to-1 task_log lookup for due_date & editing
+      const taskQueues7 = {};
+      [...allTasks].sort((a, b) => Number(a.id) - Number(b.id)).forEach(t => {
+        if (String(t.pic || '').trim().toLowerCase() !== picNorm7) return;
+        const k = `${makeTaskIdentityKey(t.pic, t.task, t.task_details)}||${String(t.start_date || '').slice(0, 10)}`;
+        if (!taskQueues7[k]) taskQueues7[k] = [];
+        taskQueues7[k].push(t);
       });
+
+      const matchedTaskIds7 = new Set();
+      const recent = [];
+
+      // 1) All realtime_log entries from the last 7 days (rolling window: from7 .. today7) regardless of action/status
+      [...allRealtimeLogs].sort((a, b) => Number(a.id) - Number(b.id)).forEach(r => {
+        if (String(r.pic || '').trim().toLowerCase() !== picNorm7) return;
+        const lDate = String(r.log_date || '').trim().slice(0, 10);
+        if (!lDate || lDate < from7 || lDate > today7) return;
+
+        const k = `${makeTaskIdentityKey(r.pic, r.task, r.task_details)}||${lDate}`;
+        const linkedTask = (taskQueues7[k] && taskQueues7[k].length > 0) ? taskQueues7[k].shift() : null;
+        if (linkedTask) matchedTaskIds7.add(linkedTask.id);
+
+        recent.push({
+          taskId: linkedTask ? linkedTask.id : null,
+          pic: r.pic,
+          start_date: lDate,
+          due_date: linkedTask ? linkedTask.due_date : lDate,
+          category: r.category || (linkedTask ? linkedTask.category : 'Routine'),
+          task: r.task,
+          status: r.action || (linkedTask ? linkedTask.status : 'Not Started'),
+          sortDate: lDate,
+          sortId: Number(r.id) || 0
+        });
+      });
+
+      // 2) Include any Not Started (or unlogged) task_log entries whose start_date is within the last 7 days
+      allTasks.forEach(t => {
+        if (String(t.pic || '').trim().toLowerCase() !== picNorm7) return;
+        if (matchedTaskIds7.has(t.id)) return;
+        const sDate = String(t.start_date || '').trim().slice(0, 10);
+        if (!sDate || sDate < from7 || sDate > today7) return;
+
+        recent.push({
+          taskId: t.id,
+          pic: t.pic,
+          start_date: sDate,
+          due_date: t.due_date || sDate,
+          category: t.category || 'Routine',
+          task: t.task,
+          status: t.status || 'Not Started',
+          sortDate: sDate,
+          sortId: Number(t.id) || 0
+        });
+      });
+
+      // Sort newest day first, then newest entry first
+      recent.sort((a, b) => {
+        if (b.sortDate !== a.sortDate) return b.sortDate.localeCompare(a.sortDate);
+        return b.sortId - a.sortId;
+      });
+
       document.getElementById('my7DaysBadge').textContent = `${recent.length} records`;
       const tbody = document.getElementById('my7DaysTableBody');
       if (!recent.length) {
         tbody.innerHTML = '<tr><td colspan="7" class="px-4 py-8 text-center text-slate-400">No tasks logged in the last 7 days.</td></tr>';
       } else {
-        tbody.innerHTML = recent.map(t => {
-          const editable = canEditTaskRecord(t);
+        tbody.innerHTML = recent.map(item => {
+          const editable = item.taskId && canEditTaskRecord({ pic: item.pic });
           return `
           <tr class="hover:bg-slate-50/80">
-            <td class="px-4 py-2.5 font-mono text-[11px] text-slate-500">${esc(t.start_date)}</td>
-            <td class="px-4 py-2.5 font-mono text-[11px] text-slate-500">${esc(t.due_date)}</td>
-            <td class="px-4 py-2.5 text-slate-600">${esc(t.category)}</td>
-            <td class="px-4 py-2.5 font-semibold text-slate-900">${esc(t.task)}</td>
-            <td class="px-4 py-2.5">${getStatusBadge(t.status)}</td>
-            <td class="px-4 py-2.5 font-mono font-semibold text-rose-600">${esc(calcOverdue(t.due_date, t.status))}</td>
+            <td class="px-4 py-2.5 font-mono text-[11px] text-slate-500">${esc(item.start_date)}</td>
+            <td class="px-4 py-2.5 font-mono text-[11px] text-slate-500">${esc(item.due_date)}</td>
+            <td class="px-4 py-2.5 text-slate-600">${esc(item.category)}</td>
+            <td class="px-4 py-2.5 font-semibold text-slate-900">${esc(item.task)}</td>
+            <td class="px-4 py-2.5">${getStatusBadge(item.status)}</td>
+            <td class="px-4 py-2.5 font-mono font-semibold text-rose-600">${esc(calcOverdue(item.due_date, item.status))}</td>
             <td class="px-4 py-2.5 text-right whitespace-nowrap">
               ${editable ? `
-                <button type="button" onclick="openEditDrawer(${t.id})" class="px-2.5 py-1 rounded border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-semibold transition mr-1 cursor-pointer">Edit</button>
-                <button type="button" onclick="quickDeleteTask(${t.id}, '${esc(t.task)}')" class="p-1 rounded text-slate-400 hover:text-rose-600 transition cursor-pointer"><i data-lucide="trash-2" class="w-3.5 h-3.5 inline"></i></button>
+                <button type="button" onclick="openEditDrawer(${item.taskId})" class="px-2.5 py-1 rounded border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-semibold transition mr-1 cursor-pointer">Edit</button>
+                <button type="button" onclick="quickDeleteTask(${item.taskId}, '${esc(item.task)}')" class="p-1 rounded text-slate-400 hover:text-rose-600 transition cursor-pointer"><i data-lucide="trash-2" class="w-3.5 h-3.5 inline"></i></button>
               ` : `<span class="text-[11px] text-slate-400 italic">View only</span>`}
             </td>
           </tr>
