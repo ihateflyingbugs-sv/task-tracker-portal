@@ -2220,12 +2220,30 @@
 
       await syncAllData(false);
       initBatchCards();
+
+      try {
+        const savedTab = localStorage.getItem('ihfb_tt_active_tab');
+        const savedMySub = Number(localStorage.getItem('ihfb_tt_active_mysub') || '1');
+        if (savedTab && savedTab !== 'home') {
+          if ((savedTab === 'team' || savedTab === 'history') && !currentUser.isSupervisor) {
+            switchTab('home');
+          } else {
+            switchTab(savedTab);
+            if (savedTab === 'mine' && [1, 2, 3].includes(savedMySub)) {
+              switchMyTaskSub(savedMySub);
+            }
+          }
+        }
+      } catch (e) {}
+
       subscribeRealtime();
       refreshIcons();
     }
 
     function handleLogout() {
       localStorage.removeItem('ihfb_sb_email');
+      localStorage.removeItem('ihfb_tt_active_tab');
+      localStorage.removeItem('ihfb_tt_active_mysub');
       location.reload();
     }
 
@@ -2339,6 +2357,7 @@
 
     function switchTab(tab, keepFilters = false) {
       if ((tab === 'team' || tab === 'history') && !currentUser.isSupervisor) return;
+      try { localStorage.setItem('ihfb_tt_active_tab', tab); } catch (e) {}
       if (!keepFilters) {
         resetAllViewFilters();
       }
@@ -2525,6 +2544,7 @@
     }
 
     function switchMyTaskSub(num) {
+      try { localStorage.setItem('ihfb_tt_active_mysub', String(num)); } catch (e) {}
       const subAccents = { 1: 'border-l-4 border-l-[#1A64FF]', 2: 'border-l-4 border-l-[#EC4899]', 3: 'border-l-4 border-l-[#10B981]' };
       [1, 2, 3].forEach(n => {
         const btn = document.getElementById('mySubBtn-' + n);
