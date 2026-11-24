@@ -2173,6 +2173,21 @@
       };
       localStorage.setItem('ihfb_sb_email', currentUser.email);
 
+      try {
+        const preTab = localStorage.getItem('ihfb_tt_active_tab');
+        const preMySub = Number(localStorage.getItem('ihfb_tt_active_mysub') || '1');
+        if (preTab && preTab !== 'home') {
+          if ((preTab === 'team' || preTab === 'history') && !currentUser.isSupervisor) {
+            switchTab('home');
+          } else {
+            switchTab(preTab);
+            if (preTab === 'mine' && [1, 2, 3].includes(preMySub)) {
+              switchMyTaskSub(preMySub);
+            }
+          }
+        }
+      } catch (e) {}
+
       const bootEl = document.getElementById('sessionBootLoader');
       if (bootEl) { bootEl.classList.add('hidden'); bootEl.classList.remove('flex'); }
       document.getElementById('loginScreen').classList.add('hidden');
